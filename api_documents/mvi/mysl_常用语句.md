@@ -1,0 +1,39 @@
+```mysql
+# 相机配置表---6个 相机位的模拟数据
+delete from CAMERA_CFG;
+insert into CAMERA_CFG(CAMERA_ID,ORDER_ID)
+values(2018080610000000001,1),
+(2018080610000000002,2),
+(2018080610000000003,3),
+(2018080610000000004,4),
+(2018080610000000005,5),
+(2018080610000000006,6);
+
+# 相机配置表---2个 相机位的模拟数据
+delete from CAMERA_CFG;
+insert into CAMERA_CFG(CAMERA_ID,ORDER_ID)
+values(2018080610000000001,1),
+(2018080610000000002,2);
+
+
+# 删除表中的数据
+delete from DETECT_TASK_INFO;
+delete from DETECT_PRODUCT_INFO;
+delete from DETECT_PRODUCT_IMG;
+delete from DETECT_DL_INTERFACE;
+delete from DETECT_OPENCV_INTERFACE;
+delete from DETECT_LAB_RESULT;
+
+
+# 查看数据
+select * from CAMERA_CFG;
+select * from DETECT_TASK_INFO;
+select * from DETECT_PRODUCT_INFO;
+select * from DETECT_PRODUCT_IMG order by PRODUCT_ID;
+select * from DETECT_DL_INTERFACE;
+select * from DETECT_OPENCV_INTERFACE;
+select * from DETECT_LAB_RESULT;
+
+
+```
+
