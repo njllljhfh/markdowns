@@ -40,11 +40,13 @@
 
 
 
-## 二、从mongo中获取图像二进制数据，GET 请求
+## 二、从mongo中获取图像二进制数据，GET 请求(mvp1.2，请求中添加task_id参数)
 
-[原图ulr]: 192.168.186.128:8000/training/tasks/imgs?img_id=2018070454850220082&img_scale=normal
+***mvp1.2，请求中添加task_id参数***
 
-[缩小图url]: 192.168.186.128:8000/training/tasks/imgs?img_id=2018082996151711264&img_scale=small
+[原图ulr]: 192.168.186.128:8000/training/tasks/imgs?task_id=2018070454850220082&img_id=2018070454850220082&img_scale=normal
+
+[缩小图url]: 192.168.186.128:8000/training/tasks/imgs?task_id=2018070454850220082&amp;img_id=2018082996151711264&img_scale=small
 
 
 
@@ -52,6 +54,7 @@
 
 ```python
 # url中的参数
+task_id = 2018070454850221123
 img_id = 2018070454850220082
 img_scale = normal  # 正常尺寸
 img_scale = small  # 小尺寸

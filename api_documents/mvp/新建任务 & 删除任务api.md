@@ -4,7 +4,7 @@
 
 第一步 插入 用户任务信息表
 
-[接口url]: 192.168.186.128:8000/training/tasks/tasks
+[接口url]: 192.168.186.128:8000/training/tasks/task
 
 ## 一、新建任务，post,插入 用户任务信息表UserTask 
 
