@@ -1,8 +1,11 @@
 ## 1 、安装mongoDB
 
-[ubuntu安装mongodb 4.0]: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
 
 ## 2、mongodb启动与关闭，以及连接mongodb
+
+### 2.1、ubuntu
+[ubuntu安装mongodb 4.0]: https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/
+
 
 ```python
 # mongodb服务器启动文件 的 位置 
@@ -33,6 +36,21 @@ sudo service mongod restart
 sudo mongo --host 127.0.0.1:27017
 
 ```
+
+### 2.2、mac
+
+```python
+# 启动mongodb
+cd /usr/local/etc
+sudo mongod
+
+# 连接mongodb
+sudo mongo
+```
+
+
+
+
 
 ## 3、常用操作
 
