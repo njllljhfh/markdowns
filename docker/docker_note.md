@@ -83,6 +83,15 @@ docker cp 容器名:容器中要拷贝的文件名及其路径 要拷贝到宿�
 
 - 用命令行连接django容器和mysql容器
 
+- 查看容器的挂载信息
+
+```
+.Source：宿主机目录
+.Destination：容器内的目录
+语法：docker inspect --format '{{range .Mounts}} {{.Source}} --- {{.Destination}} {{end}}' [container_id]
+例子：docker inspect --format '{{range .Mounts}} {{.Source}} --- {{.Destination}} {{end}}' 04078c5e4a38
+```
+
 
 
 # 二、Dockerfile
@@ -166,6 +175,12 @@ docker run -d -p 4306:3306 --privileged=true -v /Users/njl/Documents/docker_stud
 
 ```python
 docker run -itd --name django_uwsgi_py36 --link mysql_njl:dbmysql -p 8181:8000 -p 8989:8989 django_uwsgi_py36:v1.0
+```
+
+3.1.2.2
+
+```shell
+docker run -itd --name django_uwsgi_py36_mvp20 --link mysql_njl:dbmysql -p 8171:8000 -p 8979:8989 -v /Users/njl/Documents/MTWork/GitLab/mvp-python:/projects/mvp20 django_uwsgi_py36:v1.0
 ```
 
 

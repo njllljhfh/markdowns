@@ -238,7 +238,7 @@ urlpatterns = [
 
 - annotate（），分组；
 - Count（），聚合；
-- 分组annotate（）中的聚合字段，django会添自动加到 SQL的SELECT中。也会自动添加到values_list（）返回的查询集中的每一个元组中。
+- 分组annotate（）中的聚合字段，django会自动添加到 SQL的SELECT中。也会自动添加到values_list（）返回的查询集中的每一个元组中。
 
 
 
@@ -247,7 +247,6 @@ urlpatterns = [
 ![TaskImgRel表](.\images\TaskImgRel.png)
 
 <center>TaskImgRel表</center>
-
 ```python
 from django.db.models import Count
 
