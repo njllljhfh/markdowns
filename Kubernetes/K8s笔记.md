@@ -20,7 +20,7 @@
 
 ### 1.1.2、nodes 节点
 
-![Nodes_1](./images/Nodes_1.png)
+<img src="./images/Nodes_1.png" alt="Nodes_1" style="zoom:40%;" />
 
 - 每个节点都有一个Kubelet，它是一个代理，用来与master主机进行通讯。
 
@@ -56,7 +56,7 @@
 
 ### 1.1.5、Kubernetes Deployments
 
-![Deployments_1](./images/Deployments_1.png)
+<img src="./images/Deployments_1.png" alt="Deployments_1" style="zoom:50%;" />
 
 - 指到k8s如何创建和更新你的应用程序。
 
@@ -66,7 +66,7 @@
 
 ### 1.1.6、Kubernetes Pods
 
-![Pods_1_1](./images/Pods_1.png)
+<img src="./images/Pods_1.png" alt="Pods_1_1" style="zoom:40%;" />
 
 - Kubernetes Pods是个k8s的抽象概念，是由一个容器或多个容器组成的一个组。这个组中的容器共享着一些资源（如ip、port等）。
 - Pod有自己唯一的IP地址（unique IP address）
@@ -78,7 +78,7 @@
 
 ### 1.1.7、Kubernetes Services
 
-![Service_1](./images/Service_1.png)
+<img src="./images/Service_1.png" alt="Service_1" style="zoom:40%;" />
 
 - Kubernetes中的服务是一个抽象，它定义了一组逻辑Pods和访问它们的策略。
 - Services可以用不同的方式暴露：*ClusterIP*、*NodePort*、*NodePort*、*NodePort*。
@@ -95,7 +95,7 @@
   - 使用标签对对象进行分类；
 - 可以在创建对象时或创建后给对象添加标签（labels），也可以在任何时候修改标签（labels）。
 
-![Label-Selector](./images/Label-Selector.png)
+<img src="./images/Label-Selector.png" alt="Label-Selector" style="zoom:40%;" />
 
 
 

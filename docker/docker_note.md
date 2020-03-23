@@ -211,3 +211,4 @@ docker run -d --name nginx_njl --link django_uwsgi_py36_8989 -p 80:80 -p 8005:80
 ```
 
 此时在django容器中用uwsgi启动项目，可以在宿主机用127.0.0.1:8005/api/JFLG/….来访问django的动态逻辑
+
