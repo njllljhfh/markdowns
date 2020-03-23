@@ -39,7 +39,7 @@ Kubernetes 这个名字来源于希腊语，意思是舵手或飞行员。2014�
 
 **容器部署时代**：容器类似于VM，但是它们具有宽松的隔离属性，以便在应用程序之间共享操作系统(OS)。因此，容器被认为是轻量级的。与VM类似，容器有自己的文件系统、CPU、内存、进程空间等等。由于它们与底层基础设施解耦，因此可以跨 云 和 OS发行版 移植。
 
-集装箱已经变得很流行，因为它们有额外的好处，比如:
+容器已经变得很流行，因为它们有额外的好处，比如:
 
 - **敏捷的应用程序创建和部署**：与使用VM镜像相比，增加了容器镜像创建的方便性和效率。
 
@@ -104,7 +104,7 @@ Kubernetes:
 
 - 来看看K8s的组件（[Kubernetes Components](https://kubernetes.io/docs/concepts/overview/components/)）。
 
-- 准备好开始（ [Get Started](https://kubernetes.io/docs/setup/)）了么？
+- 准备好开始（[Get Started](https://kubernetes.io/docs/setup/)）了么？
 
 
 
@@ -114,11 +114,11 @@ Kubernetes:
 
 当您部署Kubernetes时，您将得到一个集群。
 
-Kubernetes 集群由一组称为节点的工作机器组成，节点运行容器化的应用程序。每个集群至少有一个工作节点。
+Kubernetes 集群由一组称为***节点***的工作机器组成，节点运行容器化的应用程序。每个集群***至少有一个工作节点***。
 
-工作 node(节点) 中管理着作为应用程序组件的 pods。Control Plane 管理集群中的工作节点和pod。在生产环境中，Control Plane 通常跨多台计算机运行，集群通常运行多个节点，提供容错和高可用性。
+工作 node(节点) 中管理着作为应用程序组件的 pods。Control Plane 管理集群中的工作节点和 pod。在生产环境中，Control Plane 通常跨多台计算机运行，集群通常运行多个节点，提供容错和高可用性。
 
-本文档概述了拥有一个完整的、工作的Kubernetes集群所需的各种组件。
+本文档概述了拥有一个完整的、可工作的Kubernetes集群所需的各种组件。
 
 下面是Kubernetes集群的关系图，所有组件都联系在一起。
 
@@ -155,31 +155,151 @@ Kubernetes API 服务器的主要实现是 [kube-apiserver](https://kubernetes.i
 
 #### 1.2.1.3、kube-scheduler
 
+kube-scheduler是控制平面的组件，其监视没有指定node的新创建的pods，并为它们选择要运行的node。
 
+调度决策考虑的因素包括：个人和集体资源需求、硬件/软件/策略约束、亲和（affinity）和反亲和（anti-affinity）规范、数据位置、工作负载间的干扰，最后期限。
+
+```
+原文：
+Factors taken into account for scheduling decisions include: individual and collective resource requirements, hardware/software/policy constraints, affinity and anti-affinity specifications, data locality, inter-workload interference, and deadlines.
+```
 
 #### 1.2.1.4、kube-controller-manager
 
+kube-controller-manager 是运行控制器（controller）进程的控制平面组件。
 
+从逻辑上讲，每个控制器（controller）都是一个单独的进程，但是为了降低复杂性，它们都被编译成一个单一的二进制文件，并在一个进程中运行。
+
+这些控制器包括：
+
+节点控制器（Node Controller）：负责 node 宕机时的通知和响应。
+复制控制器（Replication Controller）：负责为系统中的每个复制控制器对象维护正确的pod数量。
+端点控制器（Endpoints Controller）：填充端点对象(即，连接服务和pod)。
+服务帐户和令牌控制器（Service Account & Token Controllers）：为新的名称空间创建默认帐户和API访问令牌。
 
 #### 1.2.1.5、cloud-controller-manager
 
+[cloud-controller-manager](https://kubernetes.io/docs/tasks/administer-cluster/running-cloud-controller/) 运行与底层云提供商交互的 控制器。cloud-controller-manager binary 是Kubernetes 1.6 版中引入的一个alpha特性。
 
+cloud-controller-manager只运行特定的云提供商提供的控制器循环。您必须在kube-controller-manager中禁用这些控制器循环。在启动kube-controller-manager时，可以通过将 `--cloud-provider` 标签设置为 `external` 来禁用控制器循环。
+
+cloud-controller-manager允许云供应商的代码和Kubernetes代码相互独立地发展。在以前的版本中，Kubernetes核心代码的功能依赖于特定的云供应商的代码。在未来的版本中，特定的云供应商的代码应该由云供应商自己维护，并在运行Kubernetes时链接到cloud-controller-manager。
+
+以下控制器有云提供商依赖：
+
+节点控制器（Node Controller）：用于检查云提供商，以确定一个节点在停止响应后是否已被删除
+路由控制器（Route Controller）：用于在底层云基础设施中设置路由
+服务控制器（Service Controller）：用于创建、更新和删除云提供商负载平衡器
+卷控制器（Volume Controller）：用于创建、附加和挂载卷，以及与云提供商交互来编排卷
 
 
 
 ### 1.2.2、节点组件（Node Components）
 
+节点组件运行在每个节点上，维护着运行中的pods并给Kubernetes提供运行时环境。
 
+#### 1.2.2.1、kubelet
+
+kubelet 是在集群中的每个节点上运行的代理。它确保 一系列容器（[containers](https://kubernetes.io/docs/concepts/overview/what-is-kubernetes/#why-containers)） 在一个Pod中运行。
+
+kubelet 采用一组通过各种机制提供的PodSpecs，并确保那些PodSpecs中描述的容器运行正常。kubelet不管理不是由Kubernetes创建的容器。
+
+#### 1.2.2.1、kube-proxy
+
+kube-proxy是运行在集群中每个节点上的网络代理，实现Kubernetes服务概念的一部分。
+
+kube-proxy维护节点上的网络规则。这些网络规则允许 来自集群内部或外部的网络会话（network sessions） 与 pod 进行网络通信。
+
+如果有可用的操作系统包过滤层，kube-proxy将使用它。否则，kube-proxy将自己转发流量（traffic）。
+
+#### 1.2.2.3、Container Runtime
+
+Container Runtime 是负责运行容器的软件。
+
+Kubernetes支持多种容器运行时：[Docker](https://docs.docker.com/engine/)， [containerd](https://containerd.io/docs/)， [CRI-O](https://cri-o.io/#what-is-cri-o)，以及 [Kubernetes CRI (Container Runtime Interface)](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-node/container-runtime-interface.md)的任何实现。
 
 
 
 ### 1.2.3、插件（Addons）
 
+Addons 使用Kubernetes资源(守护进程启动、部署等)来实现集群特性。因为这些Addons提供了集群级别的特性，所以Addons的命名空间资源属于kube-system命名空间。
 
+选择的Addons描述如下；有关可用Addons的扩展列表，请参见[Addons](https://kubernetes.io/docs/concepts/cluster-administration/addons/)。
+
+#### 1.2.3.1、DNS
+
+虽然其他Addons不是严格要求的，但所有Kubernetes集群都应该有 [cluster DNS](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/)，因为许多示例都依赖于它。
+
+除了您的环境中的其他DNS服务器之外，集群DNS服务器也是一个DNS服务器，它为Kubernetes服务提供DNS记录。
+
+Kubernetes启动的容器会自动将此DNS服务器包含在其DNS搜索中。
+
+#### 1.2.3.2、Web UI (Dashboard)
+
+[Dashboard](https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/) 是一个通用的、基于web的Kubernetes集群用户界面。它允许用户管理并且分析解决集群中运行的应用程序以及集群本身的故障。
+
+#### 1.2.3.3、Container Resource Monitoring
+
+[Container Resource Monitoring](https://kubernetes.io/docs/tasks/debug-application-cluster/resource-usage-monitoring/) 记录中央数据库中容器的一般时间序列指标，并提供用于浏览该数据的用户界面（UI）。
+
+#### 1.2.3.4、Cluster-level Logging
+
+一个 [cluster-level logging](https://kubernetes.io/docs/concepts/cluster-administration/logging/) 机制负责将容器日志保存到具有搜索/浏览界面的中央日志存储中。
 
 
 
 ### 1.2.4、接下来是什么
 
+- 学习 [Nodes](https://kubernetes.io/docs/concepts/architecture/nodes/)
+- 学习 [Controllers](https://kubernetes.io/docs/concepts/architecture/controller/)
+- 学习 [kube-scheduler](https://kubernetes.io/docs/concepts/scheduling/kube-scheduler/)
+- 阅读 etcd 的官方 [documentation](https://etcd.io/docs/)
 
+
+
+# 二、集群架构（Cluster Architecture）
+
+[官方文档-集群架构](https://kubernetes.io/docs/concepts/architecture/nodes/)
+
+## 2.1、Nodes
+
+[官方文档-集群架构-Nodes](https://kubernetes.io/docs/concepts/architecture/nodes/)
+
+节点是Kubernetes中的工作机器，以前称为 `minion`。根据集群的不同，节点可以是VM或物理机器。每个节点都包含运行 [pods](https://kubernetes.io/docs/concepts/workloads/pods/pod/) 所需的服务，并由主组件管理。节点上的服务包括 [container runtime](https://kubernetes.io/docs/concepts/overview/components/#container-runtime)，kubelet和kube-proxy。有关更多细节，请参阅架构设计文档中的 [Kubernetes Node](https://git.k8s.io/community/contributors/design-proposals/architecture/architecture.md#the-kubernetes-node) 节点部分。
+
+- [Node Status](#2.1.1、Node Status)
+- [Management](#2.1.2、Management)
+- [Node topology](#2.1.3、Node topology)
+- [API Object](#2.1.4、API Object)
+- [What's next](#2.1.5、What's next)
+
+### 2.1.1、Node Status
+
+### 2.1.2、Management
+
+### 2.1.3、Node topology
+
+### 2.1.4、API Object
+
+### 2.1.5、What's next
+
+ 
+
+
+
+
+
+
+
+## 2.2、Master-Node Communication
+
+[官方文档-集群架构-Master-Node Communication](https://kubernetes.io/docs/concepts/architecture/master-node-communication/)
+
+## 2.3、Controllers
+
+[官方文档-集群架构-Controllers](https://kubernetes.io/docs/concepts/architecture/controller/)
+
+## 2.4、Concepts Underlying the Cloud Controller Manager
+
+[官方文档-集群架构-Concepts Underlying the Cloud Controller Manager](https://kubernetes.io/docs/concepts/architecture/cloud-controller/)
 
