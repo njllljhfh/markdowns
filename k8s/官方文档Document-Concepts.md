@@ -4,7 +4,7 @@
 
 # 一、概述（Overview）
 
-[官网文档-概述-什么是k8s](https://kubernetes.io/docs/concepts/overview/what-is-kubernetes/)
+[concepts/overview/what-is-kubernetes](https://kubernetes.io/docs/concepts/overview/what-is-kubernetes/)
 
 ## 1.1、什么是Kubernetes
 
@@ -110,7 +110,7 @@ Kubernetes:
 
 ## 1.2、k8s组件
 
-[官方文档-概述-k8s组件](https://kubernetes.io/docs/concepts/overview/components/)
+[concepts/overview/components/](https://kubernetes.io/docs/concepts/overview/components/)
 
 当您部署Kubernetes时，您将得到一个集群。
 
@@ -137,7 +137,7 @@ Kubernetes 集群由一组称为***节点***的工作机器组成，节点运行
 
 控制平面的组件做出关于集群的全局决策(例如，调度)，以及检测和响应集群事件(例如，当部署的`replicas`字段不满足时启动一个新的pod)。
 
-控制平面组件可以在集群中的任何机器上运行。但是，为了简单起见，设置脚本通常在同一台机器上启动所有控制平面组件，并且不在这台机器上运行用户容器。有关 `multi-master-VM` 设置的示例，请参见 [构建高可用性集群](https://kubernetes.io/docs/admin/high-availability/) 。
+控制平面组件可以在集群中的任何机器上运行。但是，为了简单起见，启动脚本通常在同一台机器上启动所有控制平面组件，并且不在这台机器上运行用户容器。有关 `multi-master-VM` 设置的示例，请参见 [构建高可用性集群](https://kubernetes.io/docs/admin/high-availability/) 。
 
 #### 1.2.1.1、kube-apiserver
 
@@ -174,7 +174,7 @@ kube-controller-manager 是运行控制器（controller）进程的控制平面�
 
 节点控制器（Node Controller）：负责 node 宕机时的通知和响应。
 复制控制器（Replication Controller）：负责为系统中的每个复制控制器对象维护正确的pod数量。
-端点控制器（Endpoints Controller）：填充端点对象(即，连接服务和pod)。
+端点控制器（Endpoints Controller）：填充端点对象(即，连接Services和Pods)。
 服务帐户和令牌控制器（Service Account & Token Controllers）：为新的名称空间创建默认帐户和API访问令牌。
 
 #### 1.2.1.5、cloud-controller-manager
@@ -263,9 +263,9 @@ Kubernetes启动的容器会自动将此DNS服务器包含在其DNS搜索中。
 
 ## 2.1、Nodes
 
-[官方文档-集群架构-Nodes](https://kubernetes.io/docs/concepts/architecture/nodes/)
+[concepts/architecture/nodes/](https://kubernetes.io/docs/concepts/architecture/nodes/)
 
-节点是Kubernetes中的工作机器，以前称为 `minion`。根据集群的不同，节点可以是VM或物理机器。每个节点都包含运行 [pods](https://kubernetes.io/docs/concepts/workloads/pods/pod/) 所需的服务，并由主组件管理。节点上的服务包括 [container runtime](https://kubernetes.io/docs/concepts/overview/components/#container-runtime)，kubelet和kube-proxy。有关更多细节，请参阅架构设计文档中的 [Kubernetes Node](https://git.k8s.io/community/contributors/design-proposals/architecture/architecture.md#the-kubernetes-node) 节点部分。
+节点是Kubernetes中的工作机器，以前称为 `minion`。根据集群的不同，节点可以是VM或物理机器。每个节点都包含运行 [pods](https://kubernetes.io/docs/concepts/workloads/pods/pod/) 所需的服务，并由主组件管理。节点上的服务包括 [container runtime](https://kubernetes.io/docs/concepts/overview/components/#container-runtime)，kubelet 和 kube-proxy。有关更多细节，请参阅架构设计文档中的 [Kubernetes Node](https://git.k8s.io/community/contributors/design-proposals/architecture/architecture.md#the-kubernetes-node) 部分。
 
 - [Node Status](#2.1.1、Node Status)
 - [Management](#2.1.2、Management)
@@ -275,11 +275,159 @@ Kubernetes启动的容器会自动将此DNS服务器包含在其DNS搜索中。
 
 ### 2.1.1、Node Status
 
+一个节点的状态包含以下信息：
+
+- [Addresses](#2.1.1.1、Addresses)
+- [Conditions](#2.1.1.2、Conditions)
+- [Capacity and Allocatable](#2.1.1.3、Capacity and Allocatable)
+- [Info](#2.1.1.4、Info)
+
+使用以下命令可以显示节点状态和其他有关节点的详细信息：
+
+```shell
+kubectl describe node <insert-node-name-here>
+```
+
+下面详细描述了每个部分。
+
+#### 2.1.1.1、Addresses
+
+这些字段的用法不同，取决于云提供商或裸机配置。
+
+- HostName： 节点内核报告的主机名。可以通过 `--hostname-override` 参数进行覆盖。
+- ExternalIP：通常是可在外部路由到的节点的IP地址（可从集群外部获得）。
+- InternalIP：通常是仅在集群内部可路由到的节点的IP地址。
+
+#### 2.1.1.2、Conditions
+
+`conditions`字段描述所有`Running` nodes 的状态。conditions 的例子包括：
+
+| Node Condition     | 描述                                                         |
+| ------------------ | :----------------------------------------------------------- |
+| Ready              | True：节点健康并准备接受pods。<br>False：节点不健康，不接受pods。<br>Unknown：节点控制器在最后一个节点监视周期（`node-monitor-grace-period`）中没有收到来自节点的消息。(默认为40秒) |
+| MemoryPressure     | True：节点内存有压力，即节点内存低；否则为False。            |
+| PIDPressure        | True：进程上存在压力，也就是说节点上有太多进程；否则为False。 |
+| DiskPressure       | True：磁盘大小上存在压力，也就是说磁盘容量较低；否则为False。 |
+| NetworkUnavailable | Treu：节点的网络配置不正确；否则为False。                    |
+
+节点 conditions 表示为 JSON 对象。例如，下面的响应描述了一个健康的节点。
+
+```json
+"conditions": [
+  {
+    "type": "Ready",
+    "status": "True",
+    "reason": "KubeletReady",
+    "message": "kubelet is posting ready status",
+    "lastHeartbeatTime": "2019-06-05T18:38:35Z",
+    "lastTransitionTime": "2019-06-05T11:41:27Z"
+  }
+]
+```
+
+如果 Ready condition 的 status 保持为 Unknown 或 False 的时间超过`pod-eviction-timeout`，则将向 [kube-controller-manager](https://kubernetes.io/docs/admin/kube-controller-manager/)  传递一个参数，节点控制器将调度节点上的所有pod进行删除。默认的清除超时时间是 **five minutes**（5分钟）。在某些情况下，当节点不可用时，apiserver 无法与节点上的 kubelet 通信。在与 apiserver重新建立通信之前，不能将删除pods的决定传达给kubelet。在此期间，计划删除的pods可能继续运行在其他的分开的节点上。
+
+在 1.5 之前的 Kubernetes 版本中，节点控制器将强制从 apiserver 中删除这些不可到达的pod。但是，在 1.5 或更高版本中，节点控制器不会强制删除pod，直到确认它们已停止在集群中运行。您可以看到可能在一个不可到达的节点上运行的pod处于 `Terminating` 或 `Unknown` 状态。在 Kubernetes 无法从底层基础设施推断出一个节点是否永久离开了一个集群的情况下，集群管理员可能需要手动删除节点对象。从 Kubernetes 中删除节点对象将导致在该节点上运行的所有Pod对象被从apiserver中删除，并释放它们的名称。
+
+节点生命周期控制器自动创建表示条件的 [taints](https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/)。当调度器将一个Pod分配给一个节点时，调度器将考虑节点的taints，除了Pod所允许的 taints 之外。
+
+#### 2.1.1.3、Capacity and Allocatable
+
+描述节点上可用的资源：CPU、内存和可以调度到节点上的pod的最大数量。
+
+capacity块中的字段表示节点拥有的资源总量。allocatable块表示一个节点上可供普通pod使用的资源数量。
+
+您可以阅读到更多关于 capacity 和 allocatable 资源的内容，当学习如何在节点上 [reserve compute resources](https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources/#node-allocatable) 时。
+
+#### 2.1.1.4、Info
+
+描述关于节点的一般信息，如内核版本、Kubernetes版本(kubelet和kube-proxy版本)、Docker版本（如果使用了Docker）和操作系统名称。Kubelet从节点收集这些信息。
+
+
+
 ### 2.1.2、Management
+
+与 [pods](https://kubernetes.io/docs/concepts/workloads/pods/pod/) 和 [services](https://kubernetes.io/docs/concepts/services-networking/service/) 不同，节点不是由 Kubernetes 创建的：它是由诸如 Google Compute Engine（谷歌计算引擎）之类的云提供商在外部创建的，或者它存在于物理或虚拟机池中。因此，当 Kubernetes 创建一个节点时，它创建一个表示该节点的对象。创建之后，Kubernetes 检查节点是否有效。例如，如果您尝试从以下内容创建一个节点：
+
+```json
+{
+  "kind": "Node",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "10.240.79.157",
+    "labels": {
+      "name": "my-first-k8s-node"
+    }
+  }
+}
+```
+
+Kubernetes在内部创建一个节点对象(表示形式)，并通过基于 `metadata.name` 字段的健康检查来验证节点。如果节点是有效的——也就是说，如果所有必需的服务都运行起来了——那么它就有资格运行pod。否则，对于任何集群活动都将忽略它，直到它变为有效为止。节点对象的名称必须是有效的 [DNS subdomain name（DNS子域名）](https://kubernetes.io/docs/concepts/overview/working-with-objects/names#dns-subdomain-names) 。
+
+> 注意：Kubernetes 保留无效节点的对象，并不断检查它是否有效。必须显式删除节点对象才能停止此过程。
+
+目前，有三个组件与Kubernetes节点接口交互：node controller、kubelet 和 kubectl。
+
+#### 2.1.2.1、Node Controller
+
+Node Controller 是一个 Kubernetes 主组件，它管理节点的各个方面。
+
+Node Controller 在节点的生命周期中具有多个角色。第一个角色是在节点注册时为其分配CIDR块（如果打开了CIDR分配）。
+
+第二个角色是使节点控制器的内部节点列表与云提供商的可用机器列表保持同步。在云环境中运行时，当某个节点不健康时，节点控制器就会询问云提供商该节点的VM是否仍然可用。如果该VM不可用，节点控制器将从其节点列表中删除该节点。
+
+第三角色是监控节点的健康状况。节点控制器负责将 NodeStatus 从 NodeReady 状态更新为ConditionUnknown ，当一个节点成为不可达的（即，由于某些原因，例如由于节点被被关机了，节点控制器停止接收心跳）。然后稍晚一些，如果该节点仍然不可达，则将所有的 pods 从该不达节点中清除（使用优雅的 termination ）。（默认的超时时间是40秒，开始报告ConditionUnknown；5分钟之后开清除 pods。）节点控制器每隔 `--node-monitor-period` 秒检查一次每个节点的状态。
+
+##### Heartbeats（心跳）
+
+Kubernetes节点发送的心跳有助于确定节点的可用性。心跳有两种形式：NodeStatus 和 [Lease object](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.17/#lease-v1-coordination-k8s-io) 的更新。每个节点在 `kube-node-lease` 的  [namespace](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces) 中都有一个关联的Lease object。Lease 是一种轻量级资源，它可以在集群扩展时提高节点心跳的性能。
+
+kubelet 负责创建和更新 NodeStatus 和 一个Lease object。
+
+- 当 NodeStatus 发生更改时，或者在配置的时间间隔内 NodeStatus 没有更新时，kubelet 将更新NodeStatus。NodeStatus更新的默认间隔是5分钟（比不可到达节点的40秒默认超时时间长得多）。
+- kubelet 创建 Lease object 然后每隔10秒（默认更新间隔）对其进行更新。Lease 更新独立于 NodeStatus 更新。如果Lease更新失败，kubelet将以指数形式重试，从200毫秒开始，以7秒为上限。
+
+##### Reliability（可靠性）
+
+在Kubernetes 1.4版本中，我们更新了节点控制器（node controller）的逻辑，以更好地处理大量节点无法到达主节点的情况(例如，因为主节点有网络问题)。从1.4版本开始，当做出关于pod清除的决策时，节点控制器会查看集群中所有节点的状态。
+
+在大多数情况下，node controller将清除率限制为每秒 `--node-eviction-rate` （默认0.1），这意味着它每10秒最多清除掉1个节点中的pods。
+
+当给定的可用区域中的节点变为不健康时，节点清除行为将发生变化。节点控制器同时检查区域中不健康节点的百分比（NodeReady conditions 为 ConditionUnknown 或 ConditionFalse）。如果不健康的节点的比例至少为 `--unhealthy-zone-threshold` （默认0.55）则清除率减少：如果集群很小（即小于或等于 `--large-cluster-size-threshold` 节点默认个数为50）清除就停止，否则清除率降低到 `--secondary-node-eviction-rate`（每秒默认0.01）。每个可用性区域都实现这些策略的原因是，一个可用性区域可能与主区域分隔，而其他可用性区域保持连接。如果您的集群没有跨越多个云提供商的可用性区域，那么就只有一个可用性区域（即整个集群）。
+
+跨可用性区域部署节点的一个关键原因是，当整个区域宕机时，可以将工作负载转移到正常区域。因此，如果一个区域中的所有节点都不健康，那么节点控制器将以正常的 `--node-eviction-rate` 速率清除节点。最坏的情况是所有区域都完全的不健康（即集群中没有健康节点）。在这种情况下，节点控制器（node controller）假设与master 的接存在问题，并停止所有的清除，直到恢复某些连接。
+
+从Kubernetes 1.6开始，NodeController还负责清除在节点上运行的带有`NoExecute` taints的pods，当pods不能容这些taints忍时。另外，NodeController作为一个默认禁用的alpha特性，其负责添加与节点问题（如节点不可到达或还没有准备好）相对应的taints。有关 NoExecute taints 和 alpha特性的详细信息，请参阅 [this documentation](https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/) 。
+
+从版本1.8开始，可以让 node controller 负责创建表示 Node conditions 的 taints。这是1.8版本的一个alpha特性。
+
+#### 2.1.2.2、Self-Registration of Nodes
+
+
+
+##### Manual Node Administration
+
+
+
+#### 2.1.2.3、Node capacity
+
+
+
+
+
+
 
 ### 2.1.3、Node topology
 
+
+
+
+
 ### 2.1.4、API Object
+
+
+
+
 
 ### 2.1.5、What's next
 
@@ -293,13 +441,13 @@ Kubernetes启动的容器会自动将此DNS服务器包含在其DNS搜索中。
 
 ## 2.2、Master-Node Communication
 
-[官方文档-集群架构-Master-Node Communication](https://kubernetes.io/docs/concepts/architecture/master-node-communication/)
+[concepts/architecture/master-node-communication/](https://kubernetes.io/docs/concepts/architecture/master-node-communication/)
 
 ## 2.3、Controllers
 
-[官方文档-集群架构-Controllers](https://kubernetes.io/docs/concepts/architecture/controller/)
+[concepts/architecture/controller/](https://kubernetes.io/docs/concepts/architecture/controller/)
 
 ## 2.4、Concepts Underlying the Cloud Controller Manager
 
-[官方文档-集群架构-Concepts Underlying the Cloud Controller Manager](https://kubernetes.io/docs/concepts/architecture/cloud-controller/)
+[concepts/architecture/Concepts Underlying the Cloud Controller Manager](https://kubernetes.io/docs/concepts/architecture/cloud-controller/)
 
