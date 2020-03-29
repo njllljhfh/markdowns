@@ -1,4 +1,4 @@
-# 官网文档 Document-Concepts
+# 官网文档 Documentation-Concepts
 
 
 
@@ -261,7 +261,7 @@ Kubernetes启动的容器会自动将此DNS服务器包含在其DNS搜索中。
 
 [官方文档-集群架构](https://kubernetes.io/docs/concepts/architecture/nodes/)
 
-## 2.1、Nodes
+## 2.1、节点（Nodes）
 
 [concepts/architecture/nodes/](https://kubernetes.io/docs/concepts/architecture/nodes/)
 
@@ -273,7 +273,7 @@ Kubernetes启动的容器会自动将此DNS服务器包含在其DNS搜索中。
 - [API Object](#2.1.4、API Object)
 - [What's next](#2.1.5、What's next)
 
-### 2.1.1、Node Status
+### 2.1.1、节点状态（Node Status）
 
 一个节点的状态包含以下信息：
 
@@ -345,9 +345,9 @@ capacity块中的字段表示节点拥有的资源总量。allocatable块表示�
 
 
 
-### 2.1.2、Management
+### 2.1.2、管理（Management）
 
-与 [pods](https://kubernetes.io/docs/concepts/workloads/pods/pod/) 和 [services](https://kubernetes.io/docs/concepts/services-networking/service/) 不同，节点不是由 Kubernetes 创建的：它是由诸如 Google Compute Engine（谷歌计算引擎）之类的云提供商在外部创建的，或者它存在于物理或虚拟机池中。因此，当 Kubernetes 创建一个节点时，它创建一个表示该节点的对象。创建之后，Kubernetes 检查节点是否有效。例如，如果您尝试从以下内容创建一个节点：
+与 [pods](https://kubernetes.io/docs/concepts/workloads/pods/pod/) 和 [services](https://kubernetes.io/docs/concepts/services-networking/service/) 不同，$\color{red}{\Large节点不是由 Kubernetes 创建的}$：它是由诸如 Google Compute Engine（谷歌计算引擎）之类的云提供商在外部创建的，或者它存在于物理或虚拟机池中。因此，当 Kubernetes 创建一个节点时，它创建一个表示该节点的对象。创建之后，Kubernetes 检查节点是否有效。例如，如果您尝试从以下内容创建一个节点：
 
 ```json
 {
@@ -368,17 +368,19 @@ Kubernetes在内部创建一个节点对象(表示形式)，并通过基于 `met
 
 目前，有三个组件与Kubernetes节点接口交互：node controller、kubelet 和 kubectl。
 
-#### 2.1.2.1、Node Controller
+#### 2.1.2.1、节点控制器（Node Controller）
 
 Node Controller 是一个 Kubernetes 主组件，它管理节点的各个方面。
 
-Node Controller 在节点的生命周期中具有多个角色。第一个角色是在节点注册时为其分配CIDR块（如果打开了CIDR分配）。
+Node Controller 在节点的生命周期中具有多个角色。
+
+第一个角色是在节点注册时为其分配CIDR块（如果打开了CIDR分配）。
 
 第二个角色是使节点控制器的内部节点列表与云提供商的可用机器列表保持同步。在云环境中运行时，当某个节点不健康时，节点控制器就会询问云提供商该节点的VM是否仍然可用。如果该VM不可用，节点控制器将从其节点列表中删除该节点。
 
-第三角色是监控节点的健康状况。节点控制器负责将 NodeStatus 从 NodeReady 状态更新为ConditionUnknown ，当一个节点成为不可达的（即，由于某些原因，例如由于节点被被关机了，节点控制器停止接收心跳）。然后稍晚一些，如果该节点仍然不可达，则将所有的 pods 从该不达节点中清除（使用优雅的 termination ）。（默认的超时时间是40秒，开始报告ConditionUnknown；5分钟之后开清除 pods。）节点控制器每隔 `--node-monitor-period` 秒检查一次每个节点的状态。
+第三角色是监控节点的健康状况。节点控制器负责将 NodeStatus 从 NodeReady 状态更新为ConditionUnknown ，当一个节点成为不可达的（即，由于某些原因，例如由于节点被被关机了，节点控制器停止接收心跳）。然后稍晚一些，如果该节点仍然不可达，则将所有的 pods 从该不达节点中清除（使用优雅的 termination ）。（开始报告ConditionUnknown的默认超时时间是40秒，5分钟之后开始清除 pods。）节点控制器每隔 `--node-monitor-period` 秒检查一次每个节点的状态。
 
-##### Heartbeats（心跳）
+##### 心跳（Heartbeats）
 
 Kubernetes节点发送的心跳有助于确定节点的可用性。心跳有两种形式：NodeStatus 和 [Lease object](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.17/#lease-v1-coordination-k8s-io) 的更新。每个节点在 `kube-node-lease` 的  [namespace](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces) 中都有一个关联的Lease object。Lease 是一种轻量级资源，它可以在集群扩展时提高节点心跳的性能。
 
@@ -387,9 +389,9 @@ kubelet 负责创建和更新 NodeStatus 和 一个Lease object。
 - 当 NodeStatus 发生更改时，或者在配置的时间间隔内 NodeStatus 没有更新时，kubelet 将更新NodeStatus。NodeStatus更新的默认间隔是5分钟（比不可到达节点的40秒默认超时时间长得多）。
 - kubelet 创建 Lease object 然后每隔10秒（默认更新间隔）对其进行更新。Lease 更新独立于 NodeStatus 更新。如果Lease更新失败，kubelet将以指数形式重试，从200毫秒开始，以7秒为上限。
 
-##### Reliability（可靠性）
+##### 可靠性（Reliability）
 
-在Kubernetes 1.4版本中，我们更新了节点控制器（node controller）的逻辑，以更好地处理大量节点无法到达主节点的情况(例如，因为主节点有网络问题)。从1.4版本开始，当做出关于pod清除的决策时，节点控制器会查看集群中所有节点的状态。
+在Kubernetes 1.4版本中，我们更新了节点控制器（node controller）的逻辑，以更好地处理大量节点无法到达主节点的情况（例如，因为主节点有网络问题）。从1.4版本开始，当做出关于pod清除的决策时，节点控制器会查看集群中所有节点的状态。
 
 在大多数情况下，node controller将清除率限制为每秒 `--node-eviction-rate` （默认0.1），这意味着它每10秒最多清除掉1个节点中的pods。
 
@@ -401,53 +403,218 @@ kubelet 负责创建和更新 NodeStatus 和 一个Lease object。
 
 从版本1.8开始，可以让 node controller 负责创建表示 Node conditions 的 taints。这是1.8版本的一个alpha特性。
 
-#### 2.1.2.2、Self-Registration of Nodes
+#### 2.1.2.2、自注册节点（Self-Registration of Nodes）
 
+当kubelet 的flag `--register-node` 为 true（默认值）时，kubelet将尝试向 API server 注册自己。这是大多数发行版使用的首选模式。
 
+对于自注册，kubelet 启动时有以下选项：
 
-##### Manual Node Administration
+- `--kubeconfig` - Path to credentials to authenticate itself to the apiserver.
+- `--cloud-provider` - 如何与云提供商通信，以读取自身的元数据。
+- `--register-node` - 自动向 API server 注册。
+- `--register-with-taints` - 使用指定的 taints 列表注册节点（逗号分隔`=:`）。如果register-node为，则为No-op。
+- `--node-ip` - 节点的 IP 地址。
+- `--node-labels` - 在集群中注册节点时要添加的Labels（参见1.13+中 [NodeRestriction admission plugin](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) 实施的强制 label restrictions）。
+- `--node-status-update-frequency` - 指定kubelet将节点状态发送给 master 的频率。
 
+当启用[Node authorization mode](https://kubernetes.io/docs/reference/access-authn-authz/node/) and [NodeRestriction admission plugin](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) 时，kubelets只被授权创建/修改自己的节点资源。
 
+##### 手动注册（Manual Node Administration）
 
-#### 2.1.2.3、Node capacity
+集群管理员可以创建和修改节点对象。
 
+如果管理员希望手动创建节点对象，请设置kubelet flag `--register-node=false` 。
 
+管理员可以修改节点资源（忽略 `--register-node` 的设置）。修改包括：设置节点上的 labels 并将其标记为不可调度。
 
+节点上的 labels 可以与节点上的节点选择器结合起来使用来控制调度pod，例如，将一个pod约束为只能在节点的一个子集上运行。
 
+节点上的 labels 可以与 pods 上的节点选择器一起使用，以控制调度。例如，将一个pod约束为只能在节点的一个子集上运行。
 
+将一个节点标记为不可调度将阻止将新pods调度到该节点，但不会影响节点上的任何现有pods。这对于节点重新启动前的准备步骤非常有用。例如，要标记一个节点不可调度，请运行以下命令：
 
+```shell
+kubectl cordon $NODENAME
+```
 
-### 2.1.3、Node topology
+> 注意：DaemonSet控制器创建的Pods绕过Kubernetes调度器，不考虑节点上的不可调度性属性。这假设守护进程属于机器，即使它在准备重新启动时正在耗尽应用程序。
+>
+> 警告：kubectl cordon将一个节点标记为“不可调度的”，其副作用是服务控制器将该节点从它以前有资格获得的任何LoadBalancer节点目标列表中删除，从而有效地从被封锁的节点中删除传入的负载平衡器流量。
+>
+> 原文：
+>
+> > **Caution:** `kubectl cordon` marks a node as ‘unschedulable’, which has the side effect of the service controller removing the node from any LoadBalancer node target lists it was previously eligible for, effectively removing incoming load balancer traffic from the cordoned node(s). 
 
+#### 2.1.2.3、节点容量（Node capacity）
 
+节点的容量(cpu的数量和内存的数量)是节点对象的一部分。通常，节点在创建节点对象时注册自己并报告它们的容量（capacity）。如果您正在进行 [manual node administration](https://kubernetes.io/docs/concepts/architecture/nodes/#manual-node-administration) ，则需要在添加节点时设置节点容量。
 
+Kubernetes调度器确保一个节点上的所有pod都有足够的资源。它检查节点上所有容器请求的资源总和不大于节点容量。它包括由kubelet启动的所有容器，但不包括由 [container runtime](https://kubernetes.io/docs/concepts/overview/components/#container-runtime) 直接启动的容器，也不包括在容器外部运行的任何进程（process）。
 
+如果您希望显式地为非pod进程保留资源，请按照这个教程 [reserve resources for system daemons](https://kubernetes.io/docs/tasks/administer-cluster/reserve-compute-resources/#system-reserved)。
 
-### 2.1.4、API Object
+### 2.1.3、节点拓扑（Node topology）
 
+**FEATURE STATE:** `Kubernetes v1.17`  alpha版
 
+如果您已经启用了 `TopologyManager` [feature gate](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/) ，那么kubelet在做出资源分配决策时可以使用拓扑提示（topology hints）。
 
+### 2.1.4、API对象（API Object）
 
+Node是Kubernetes REST API中的最上层资源。关于API对象的更多细节可以在 [Node API object](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.17/#node-v1-core) 中找到。
 
 ### 2.1.5、What's next
 
- 
+- 了解节点组件（ [node components](https://kubernetes.io/docs/concepts/overview/components/#node-components)）
+- 了解节点级拓扑（about node-level topology）: [Control Topology Management Policies on a node（控制节点上的拓扑管理政策）](https://kubernetes.io/docs/tasks/administer-cluster/topology-manager/)
 
 
 
-
-
-
-
-## 2.2、Master-Node Communication
+## 2.2、主节点通信（Master-Node Communication）
 
 [concepts/architecture/master-node-communication/](https://kubernetes.io/docs/concepts/architecture/master-node-communication/)
 
-## 2.3、Controllers
+本文档编目了master服务器（实际上是apiserver）和 Kubernetes 集群之间的通信路径。其目的是允许用户自定义安装以加强网络配置，以便集群可以在不受信任的网络上运行（或在云提供商的完全公共ip上运行）。
+
+- [Cluster to Master](#2.2.1、集群到主服务器（Cluster to Master）)
+- [Master to Cluster](#2.2.2、主服务器到集群（Master to Cluster）)
+
+### 2.2.1、集群到主服务器（Cluster to Master）
+
+从集群到master服务器的所有通信路径都终止于apiserver（其他的主组件都不是为了公开远程服务而设计的）。在典型的部署中，apiserver被配置为监听安全HTTPS端口（443）上的远程连接，并且启用了一种或多种形式的客户端身份验证机制。应该启用一种或多种形式的授权（ [authorization](https://kubernetes.io/docs/reference/access-authn-authz/authorization/) ），特别是在允许匿名请求（ [anonymous requests](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#anonymous-requests) ）或服务帐户令牌（ [service account tokens](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#service-account-tokens) ）的情况下。
+
+应该给节点提供集群的公共根证书（public root certificate），以便它们可以安全地连接到apiserver，同时还可以连接到有效的客户端凭证（valid client credentials）。例如，在默认的GKE部署中，以客户端证书（client certificate）的形式向 kubelet 提供客户端凭证（ client credentials）。有关 kubelet 客户端证书的自动提供，请参见 [kubelet TLS bootstrapping](https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet-tls-bootstrapping/) 。
+
+希望连接到apiserver的pod可以利用服务帐户来实现安全连接，以便 Kubernetes 在 pod实例化时自动将公共根证书（public root certificate）和有效的承载令牌（valid bearer token）注入到pod中。kubernetes服务（在所有 namespaces 中）配置了一个虚拟IP地址，该地址（通过kube-proxy）被重定向到apiserver上的HTTPS端点。
+
+主组件（master components）也通过安全端口与集群apiserver通信。
+
+因此，默认情况下，从集群（节点上运行的节点和pod）到主机（master）的连接的默认操作模式是安全的，并且可以在不可信的和/或公共网络上运行。
+
+### 2.2.2、主服务器到集群（Master to Cluster）
+
+从主服务器(apiserver)到集群有两条主要通信路径。第一个是从apiserver到kubelet进程，kubelet进程在集群中的每个节点上运行。第二种是通过apiserver的代理功能从apiserver到任何节点、pod或服务。
+
+#### 2.2.2.1、apiserver to kubelet
+
+从apiserver到kubelet的连接用于：
+
+- 获取pod的日志。
+- 连接到（通过kubectl）正在运行的pod。
+- 提供kubelet的端口转发功能（port-forwarding functionality）。
+
+这些连接在kubelet的HTTPS端点处终止。默认情况下，apiserver不验证kubelet的服务证书，这使得连接容易受到中间人攻击（man-in-the-middle attacks），并且在不可信的和/或公共网络上运行不安全。
+
+要验证此连接，请使用 `--kubelet-certificate-authority` 为 apiserver 提供一个根证书包（root certificate bundle），用于验证kubelet的服务证书。
+
+如果上述方式不可行，在apiserver和kubelet之间使用 [SSH tunneling](https://kubernetes.io/docs/concepts/architecture/master-node-communication/#ssh-tunnels) （如果需要），以避免通过不可信或公共网络的连接。
+
+最后，应该启用 Kubelet身份验证和/或授权（[Kubelet authentication and/or authorization](https://kubernetes.io/docs/admin/kubelet-authentication-authorization/) ）来保护Kubelet API。
+
+#### 2.2.2.2、apiserver to nodes, pods, and services
+
+从apiserver到node、pod或service的连接默认为纯HTTP连接，因此既不进行身份验证，也不进行加密。他们可以运行在一个安全的HTTPS连接上（通过在API URL中的 node、pod或service的名称前加上前缀 `https:`），但它们不会验证HTTPS端点提供的证书，也不会提供客户端凭证，所以当连接将被加密，它不会提供任何完整性的担保。这些连接**目前在不可信和/或公共网络上运行是不安全的**。
+
+#### 2.2.2.3、SSH Tunnels
+
+Kubernetes支持SSH通道（SSH tunnels）来保护 **master -> cluster** 的通信路径。在这个配置中，apiserver向集群中的每个节点发起一个SSH通道（连接到监听端口22的ssh server），并通过该通道传递所有发送给kubelet、node、pod或service的流量。该通道确保流量不会暴露在节点所在的网络之外。
+
+SSH通道（SSH tunnels）目前是不推荐的，所以除非您知道自己在做什么，否则不应该选择使用它们。正在设计这种通信通道的替代品。
+
+
+
+## 2.3、控制器（Controllers）
 
 [concepts/architecture/controller/](https://kubernetes.io/docs/concepts/architecture/controller/)
+
+在机器人学和自动化技术中，控制循环（control loop）是调节系统状态的不终止的循环。
+
+有一个控制回路的例子：房间里的恒温器。
+
+当你设定温度时，它会告诉恒温器你想要的状态（*desired state*）。实际的室温是当前的状态（*current state*）。恒温器的作用是通过打开或关闭设备，使当前的状态更接近于想要的状态。
+
+在Kubernetes中，控制器是监视集群状态的控制循环（control loop），它在需要的地方做出改变或请求改变。每个控制器都试图将当前集群状态变成更接近期望的状态。
+
+- [Controller pattern](#2.3.1、Controller pattern)
+- [Desired versus current state](#2.3.2、Desired versus current state)
+- [Design](#2.3.3、Design)
+- [Ways of running controllers](#2.3.4、Ways of running controllers)
+- [What's next](#2.3.5、What's next)
+
+### 2.3.1、控制器模式（Controller pattern）
+
+控制器至少跟踪一个Kubernetes资源类型。这些对象（[objects](https://kubernetes.io/docs/concepts/overview/working-with-objects/kubernetes-objects/#kubernetes-objects)）有一个spec字段，表示期望状态。该资源的控制器负责使当前状态更接近期望状态。
+
+控制器可以自己执行动作，在Kubernetes中更常见的是控制器向API服务器发送消息（该消息具有有用的副作用）。您将在下面看到这样的例子。
+
+#### 2.3.1.1、通过API服务控制（Control via API server）
+
+Job控制器是Kubernetes内置控制器的一个例子。内置控制器通过与集群API服务器交互来管理状态。
+
+Job是Kubernetes的资源，它运行一个或多个Pod来执行一个任务，然后停止。
+
+(一旦[scheduled](https://kubernetes.io/docs/concepts/scheduling/) ，Pod对象将成为kubelet期望状态的一部分)。
+
+当Job控制器看到一个新任务时，它会确保在集群的某个地方的一组节点上的kubelet运行正确数量的pod来完成工作。Job控制器本身不运行任何pod或容器。相反，Job控制器告诉API服务器创建或删除pod。控制平面（[control plane](https://kubernetes.io/docs/reference/glossary/?all=true#term-control-plane) ）中的其他组件对新信息起作用（有新的Pods要调度和运行），最终完成工作。
+
+创建新Job之后，期望状态是完成该Job。Job控制器使该Job的当前状态更接近您期望的状态：创建执行该Job所需工作的pod，以便该Job更接近完成。
+
+控制器还更新它们的对象。例如：一旦某个Job完成，Job控制器就会更新该Job对象，将其标记为 `Finished` 。
+
+(这有点像一些恒温器把灯关掉，以表明你的房间现在处于你设定的温度)。
+
+#### 2.3.1.2、直接控制（Direct control）
+
+与Job不同的是，有些控制器需要更改集群之外的内容。
+
+例如，如果您使用一个控制循环来确保集群中有足够的节点，那么该控制器需要当前集群之外的某些东西来在需要时设置新节点。
+
+与外部状态交互的控制器从API服务器找到它们想要的状态，然后直接与外部系统通信，以使当前状态更加一致。
+
+(在你的集群中的确有一个控制器来水平扩展集群中的节点。请参阅 [Cluster autoscaling](https://kubernetes.io/docs/tasks/administer-cluster/cluster-management/#cluster-autoscaling) )。
+
+### 2.3.2、期望状态与当前状态（Desired versus current state）
+
+Kubernetes拥有系统的本地云视图（cloud-native view of systems），并且能够处理不断的变化。
+
+随着工作的进行和控制循环自动修复故障，您的集群可以在任何时候进行更改。这意味着，您的集群可能永远不会达到稳定状态。
+
+只要集群的控制器在运行，并且能够进行有用的更改，那么总体状态是否稳定并不重要。
+
+### 2.3.3、设计（Design）
+
+Kubernetes的设计原则是使用大量控制器，每个控制器管理集群状态的一个特定方面。最常见的情况是，一个特定的控制循环(控制器)使用一种资源作为其期望状态，并使用另一种资源来实现期望状态。
+
+使用简单的控制器比使用一组相互连接的单片控制循环（monolithic set of control loops that are interlinked）更有用。控制器可能会失败，因此Kubernetes的设计就考虑了这一点。
+
+例如：Job控制器跟踪 Job对象（以发现新工作）和 Pod对象（运行Job，然后查看何时完成工作)。在这种情况下，由某些其他的东西来创建Job，而Job控制器创建pod。
+
+> 注意：
+>
+> 可以有多个控制器来创建或更新相同类型的对象。在幕后，Kubernetes控制器确保他们只关注与控制资源相关联的资源。
+>
+> 例如，可以有 **部署** 和 **Jobs** ;这两者都会产生Pods。Job控制器不会删除部署时创建的Pods，因为控制器可以使用信息（[labels](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels)）将这些Pods区分开。
+
+### 2.3.4、控制器运行方式（Ways of running controllers）
+
+Kubernetes有一组内置的控制器，在 [kube-controller-manager](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/) 中运行。这些内置的控制器提供了重要的核心行为（core behaviors）。
+
+部署控制器和Job控制器是Kubernetes本身的一部分（"内置"控制器）。Kubernetes允许您运行一个弹性控制平面，这样，如果任何一个内置控制器发生故障，控制平面的另一部分将接管工作。
+
+您可以找到运行在控制平面之外的控制器，以扩展Kubernetes。或者，如果您愿意，您可以自己编写一个新控制器。您可以将自己的控制器作为一组pod运行，也可以从外部运行到Kubernetes。什么方式最适合将取决于该控制器要做什么。
+
+### 2.3.5、What's next
+
+- 阅读 [Kubernetes control plane](https://kubernetes.io/docs/concepts/#kubernetes-control-plane) 的内容
+- 发现一些基本的 [Kubernetes objects](https://kubernetes.io/docs/concepts/#kubernetes-objects)
+- 了解更多关于 [Kubernetes API](https://kubernetes.io/docs/concepts/overview/kubernetes-api/) 的内容
+- 如果你想写自己的控制器，see [Extension Patterns](https://kubernetes.io/docs/concepts/extend-kubernetes/extend-cluster/#extension-patterns) in Extending Kubernetes。
+
+
 
 ## 2.4、Concepts Underlying the Cloud Controller Manager
 
 [concepts/architecture/Concepts Underlying the Cloud Controller Manager](https://kubernetes.io/docs/concepts/architecture/cloud-controller/)
+
+
 
