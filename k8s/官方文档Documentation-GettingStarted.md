@@ -225,7 +225,7 @@ kubelet现在每隔几秒钟就重新启动一次，因为它在一个crashloop�
 
 
 
-##### 1.2.1.1.7、在控制平面节点上配置kubelet使用的cgroup驱动程序
+##### 1.2.1.1.8、在控制平面节点上配置kubelet使用的cgroup驱动程序
 
 （Configure cgroup driver used by kubelet on control-plane node）
 
@@ -250,13 +250,13 @@ systemctl restart kubelet
 
 对其他容器运行时（如CRI-O和containerd）的 cgroup driver 的自动检测正在进行中。（原文：The automatic detection of cgroup driver for other container runtimes like CRI-O and containerd is work in progress.）
 
-##### 1.2.1.1.8、分析解决问题
+##### 1.2.1.1.9、分析解决问题
 
 如果您在使用kubeadm时遇到困难，请咨询我们的 [troubleshooting docs](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/troubleshooting-kubeadm/)。
 
 
 
-##### 1.2.1.1.9、What's next
+##### 1.2.1.1.10、What's next
 
 - 使用kubeadm创建集群（[Using kubeadm to Create a Cluster](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/)）
 
