@@ -391,7 +391,7 @@ channel.queue_bind(exchange=exchange_name,
   ![direct-exchange-multiple](./images/direct-exchange-multiple.png)
   - exchange X 绑定了两个queue，Q1、Q2
   - Q1、和Q2的binding key都是black
-  - 消息发布者P发出的带有routing key=black的消息，会添同事加到Q1和Q2中
+  - 消息发布者P发出的带有routing key=black的消息，会添同时加到Q1和Q2中
   - 这样就实现了"fanout"类型exchange的广播功能
 
 ### 1.4.3、完整代码
