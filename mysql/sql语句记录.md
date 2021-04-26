@@ -24,5 +24,13 @@
 
 
 
+### 取消分组字段要在select中的限制
 
+```sql
+SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));
+```
+
+
+
+---
 
