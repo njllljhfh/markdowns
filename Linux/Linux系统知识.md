@@ -200,3 +200,52 @@
 
 
 
+## Ubuntu18.04 设置固定ip
+
+1. 查看网卡，找到要设置固定ip的网卡
+
+   ```
+   ifconfig
+   ```
+
+2. 设置名为 ens33 网卡的ip
+
+   ```shell
+   # 用vim打开网络配置文件
+   sudo vim /etc/netplan/01-network-manager-all.yaml
+   
+   # 修改前
+     1 # Let NetworkManager manage all devices on this system
+     2 network:
+     3   version: 2
+     4   renderer: NetworkManager
+   
+    
+   # 修改后
+     1 # Let NetworkManager manage all devices on this system
+     2 network:
+     3   version: 2
+     4   #renderer: NetworkManager
+     5   ethernets:
+     6     ens33:
+     7       addresses: [10.0.1.110/24]  # 固定ip
+     8       gateway4: 10.0.1.2  # 网关
+     9       dhcp4: no  # no代表不是用dhcp动态获取ip，yes代表使用dhcp动态获取ip
+    10       nameservers:
+    11         addresses: [10.0.1.2, 8.8.8.8]  # DNS
+    12         #search: [localdomin]  # 虚拟机所在的domain（这项不用貌似也可以）
+   
+   ```
+
+3. 重启网络
+
+   ```shell
+   sudo netplan apply
+   ```
+
+   
+
+---
+
+
+
