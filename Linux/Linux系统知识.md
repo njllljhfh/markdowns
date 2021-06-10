@@ -202,6 +202,8 @@
 
 ## Ubuntu18.04 设置固定ip
 
+[参考文档](https://blog.csdn.net/weixin_43843847/article/details/90938308)
+
 1. VMware虚拟网络配置
 
 ![选择虚拟网络编辑器](.\image\选择虚拟网络编辑器.png)
@@ -274,6 +276,165 @@
     ```
 
 
+
+---
+
+## linux命令
+
+### Linux 在后台以守护进程运行 python 脚本，并将日志从定向到指定文件
+
+```shell
+# 以守护进程方式运行 image_collector_atesi.py 并将日志重定向到 image_collector.log文件（-s和-o是此python脚本需要的参数）
+nohup python3 -u image_collector_atesi.py -s /APP/testimg/ -o ./image_collector_atesi_vi_export >> image_collector.log 2>&1 &
+```
+
+
+
+---
+
+
+
+## Ubuntu18.04 安装python虚拟环境
+
+[参考文档](https://blog.csdn.net/focusdroid/article/details/93484175)
+
+1. 安装虚拟环境
+
+   ```shell
+   sudo pip3 install virtualenv
+   ```
+
+2. 安装虚拟环境扩展包
+
+   ```shell
+   sudo pip3 install virtualenvwrapper
+   ```
+
+3. 编辑home目录下的 `.bashrc` 文件，添加下面两行代码
+
+   ```shell
+   export WORKON_HOME=$HOME/.virtualenvs
+   export VIRTUALENVWRAPPER_PYTHON='/usr/bin/python3.6'
+   source /usr/local/bin/virtualenvwrapper.sh
+   ```
+
+4. 保存并退出，执行以下命令
+
+   ```shell
+   # 注意此时是在 home 目录下
+   source .bashrc
+   ```
+
+5. 创建虚拟环境
+
+   ```shell
+   #1 创建虚拟环境命令(python2的虚拟环境)
+   mkvirtualenv 虚拟环境名
+   
+   #2 创建python3的虚拟环境
+   mkvirtualenv -p python3 虚拟环境的名字
+   
+   #3 进入虚拟环境
+   workon 虚拟环境名
+   
+   #4 退出虚拟环境
+   deactivate
+   
+   #5 查看机器上有多少虚拟环境
+   workon 空格 + 两个Tab键
+   
+   #6 删除虚拟环境
+   rmvirtualenv 虚拟环境名称
+   
+   #7 查看虚拟环境装了那些包
+   pip list 
+   ```
+
+   
+
+
+
+---
+
+
+
+
+
+## Ubuntu18.04 安装 MySQL 
+
+[官方文档](https://dev.mysql.com/doc/mysql-apt-repo-quick-guide/en/#apt-repo-fresh-install)
+
+1. 下载  APT仓库包 到当前目录下
+
+   ```shell
+   wget https://dev.mysql.com/get/mysql-apt-config_0.8.17-1_all.deb
+   ```
+
+2. 安装刚才下载的  APT仓库包 
+
+   ```shell
+   sudo dpkg -i mysql-apt-config_0.8.17-1_all.deb
+   ```
+
+3. 更新新安装包信息从 MySQL APT repository
+
+   ```shell
+   sudo apt-get update
+   ```
+
+4. 用 APT 安装 MySQL 
+
+   ```shell
+   sudo apt-get install mysql-server
+   ```
+
+5. 配置可远程访问的账户
+
+   - 用安装时 mysql 的密码，控制台登陆 mysql
+
+   ```shell
+   mysql -uroot -p
+   输入密码登陆，之后进行用户配置
+   ```
+   
+   - 使用数据库
+   
+   ```mysql
+   use mysql
+   ```
+   
+   - 配置授权用户（注意这里的 用户名、密码，必须是自己要设置的）
+   
+   ```mysql
+   # 这里，我们在 <GRANT> 语句内设置的用户名和密码，就是远程访问的用户和密码
+   GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'mysql' WITH GRANT OPTION;
+   ```
+   
+   - 刷新权限
+   
+   ```mysql
+   FLUSH PRIVILEGES;
+   ```
+   
+6. 设置开启远程登录
+
+   - 进入配置文件
+
+   ```shell
+   sudo vim /etc/mysql/mysql.conf.d/mysqld.cnf
+   ```
+
+   - 注释掉下图中的内容，保存并退出配置文件
+
+   ![mysql配置远程访问](.\image\mysql配置远程访问.png)
+
+   - 重启 mysql
+
+   ```shell
+   sudo systemctl restart mysql
+   ```
+
+   
 
 ---
 
