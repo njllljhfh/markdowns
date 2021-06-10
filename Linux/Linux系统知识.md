@@ -281,7 +281,7 @@
 
 ## linux命令
 
-### Linux 在后台以守护进程运行 python 脚本，并将日志从定向到指定文件
+### Linux 在后台以守护进程运行 python 脚本，并将日志重定向到指定文件
 
 ```shell
 # 以守护进程方式运行 image_collector_atesi.py 并将日志重定向到 image_collector.log文件（-s和-o是此python脚本需要的参数）
