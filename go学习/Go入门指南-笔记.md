@@ -589,7 +589,6 @@ switch a, b := x[i], y[j]; {
     }
     ```
     
-
 - 死循环： `for { }`
 
 
@@ -1476,7 +1475,7 @@ func main() {
 
 数组通常是一维的，但是可以用来组装成多维数组，例如：`[3][5]int`，`[2][2][2]float64`。
 
-内部数组总是长度相同的。Go 语言的多维数组是矩形式的（唯一的例外是切片的数组，参见第 7.2.5 节）。
+内部数组总是长度相同的。Go 语言的多维数组是矩形式的（**唯一的例外** 是切片的数组，参见第 7.2.5 节）。
 
 ```go
 package main
@@ -1700,5 +1699,722 @@ v := make([]int, 10, 50)
 
 ### 7.2.5 多维 切片
 
-和数组一样，切片通常也是一维的，但是也可以由一维组合成高维。通过分片的分片（或者切片的数组），长度可以任意动态变化，所以 Go 语言的多维切片可以任意切分。而且，内层的切片必须单独分配（通过 make 函数）。
+和数组一样，切片通常也是一维的，但是也可以由一维组合成高维。通过分片的分片（或者切片的数组），**长度可以任意动态变化**，所以 Go 语言的多维切片可以任意切分。而且，内层的切片必须单独分配（通过 make 函数）。
+
+
+
+### 7.2.6 bytes 包
+
+类型 `[]byte` 的切片十分常见，Go 语言有一个 bytes 包专门用来解决这种类型的操作方法。
+
+bytes 包和字符串包十分类似（参见第 4.7 节）。而且它还包含一个十分有用的类型 Buffer:
+
+```go
+import "bytes"
+type Buffer struct {
+    ...
+}
+```
+
+这是一个长度可变的 bytes 的 buffer，提供 Read 和 Write 方法，因为读写长度未知的 bytes 最好使用 buffer。
+
+Buffer 可以这样定义：`var buffer bytes.Buffer`。
+
+或者使用 new 获得一个指针：`var r *bytes.Buffer = new(bytes.Buffer)`。
+
+或者通过函数：`func NewBuffer(buf []byte) *Buffer`，创建一个 Buffer 对象并且用 buf 初始化好；NewBuffer 最好用在从 buf 读取的时候使用。
+
+
+
+**通过 buffer 串联字符串**
+
+类似于 Java 的 StringBuilder 类。
+
+在下面的代码段中，我们创建一个 buffer，通过 `buffer.WriteString(s)` 方法将字符串 s 追加到后面，最后再通过 `buffer.String()` 方法转换为 string：
+
+```go
+var buffer bytes.Buffer
+for {
+    if s, ok := getNextString(); ok { //method getNextString() not shown here
+        buffer.WriteString(s)
+    } else {
+        break
+    }
+}
+fmt.Print(buffer.String(), "\n")
+```
+
+这种实现方式比使用 `+=` 要更节省内存和 CPU，尤其是要串联的字符串数目特别多的时候。
+
+
+
+## 7.3 For-range 结构
+
+这种构建方法可以应用于数组和切片:
+
+```go
+for ix, value := range slice1 {
+	...
+}
+```
+
+第一个返回值 ix 是数组或者切片的索引，第二个是在该索引位置的值；他们都是仅在 for 循环内部可见的局部变量。value 只是 slice1 某个索引位置的值的一个拷贝，不能用来修改 slice1 该索引位置的值。
+
+如果你只需要索引，你可以忽略第二个变量，例如：
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	seasons := []string{"Spring", "Summer", "Autumn", "Winter"}
+	for i := range seasons {
+		fmt.Printf("%v", i)
+	}
+}
+// Output: 0 1 2 3
+```
+
+
+
+## 7.4 切片重组（reslice）
+
+我们已经知道切片创建的时候通常比相关数组小，例如：
+
+```go
+slice1 := make([]type, start_length, capacity)
+```
+
+其中 `start_length` 作为切片初始长度而 `capacity` 作为相关数组的长度。
+
+这么做的好处是我们的切片在达到容量上限后可以扩容。改变切片长度的过程称之为切片重组 **reslicing**，做法如下：`slice1 = slice1[0:end]`，其中 end 是新的末尾索引（即长度）。
+
+将切片扩展 1 位可以这么做：
+
+```go
+sl = sl[0:len(sl)+1]
+```
+
+切片可以反复扩展直到占据整个相关数组。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	var ar = [10]int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+	var a = ar[5:7] // reference to subarray {5,6} - len(a) is 2 and cap(a) is 5
+	fmt.Printf("len = %d, cap = %d\n", len(a), cap(a))
+	
+	a = a[0:4] // ref of subarray {5,6,7,8} - len(a) is now 4 but cap(a) is still 5
+	fmt.Printf("len = %d, cap = %d\n", len(a), cap(a))
+
+	a = a[1:1]
+	fmt.Printf("len = %d, cap = %d\n", len(a), cap(a))
+}
+// 输出结果：
+// len = 2, cap = 5
+// len = 4, cap = 5
+// len = 0, cap = 4
+```
+
+
+
+## 7.5 切片的复制与追加
+
+如果想增加切片的容量，我们必须创建一个新的更大的切片并把原分片的内容都拷贝过来。下面的代码描述了从拷贝切片的 copy 函数和向切片追加新元素的 append 函数。
+
+```go
+package main
+import "fmt"
+func main() {
+    slFrom := []int{1, 2, 3}
+    slTo := make([]int, 10)
+    n := copy(slTo, slFrom)
+    fmt.Println(slTo)
+    fmt.Printf("Copied %d elements\n", n) // n == 3
+    sl3 := []int{1, 2, 3}
+    sl3 = append(sl3, 4, 5, 6)
+    fmt.Println(sl3)
+}
+```
+
+`func append(s[]T, x ...T) []T` 其中 append 方法将 **0 个或多个** 具有相同类型 s 的元素追加到切片后面并且返回新的切片；追加的元素必须和原切片的元素同类型。如果 s 的容量不足以存储新增元素，append 会分配新的切片来保证已有切片元素和新增元素的存储。因此，返回的切片可能已经指向一个不同的相关数组了。append 方法总是返回成功，除非系统内存耗尽了。
+
+如果你想将切片 y 追加到切片 x 后面，只要将第二个参数扩展成一个列表即可：`x = append(x, y...)`。
+
+**注意**： append 在大多数情况下很好用，但是如果你想完全掌控整个追加过程，你可以实现一个这样的 AppendByte 方法：
+
+```go
+func AppendByte(slice []byte, data ...byte) []byte {
+    m := len(slice)
+    n := m + len(data)
+    if n > cap(slice) { // if necessary, reallocate
+        // allocate double what's needed, for future growth.
+        newSlice := make([]byte, (n+1)*2)
+        copy(newSlice, slice)
+        slice = newSlice
+    }
+    slice = slice[0:n]
+    copy(slice[m:n], data)
+    return slice
+}
+```
+
+`func copy(dst, src []T) int` copy 方法将类型为 T 的切片从源地址 src 拷贝到目标地址 dst，覆盖 dst 的相关元素，并且返回拷贝的元素个数。源地址和目标地址可能会有重叠。拷贝个数是 src 和 dst 的长度最小值。如果 src 是字符串那么元素类型就是 byte。如果你还想继续使用 src，在拷贝结束后执行 `src = dst`。
+
+
+
+## 7.6 字符串、数组和切片的应用
+
+### 7.6.1 从字符串生成字节切片
+
+假设 s 是一个字符串（本质上是一个字节数组），那么就可以直接通过 `c := []byte(s)` 来获取一个字节的切片 c。另外，您还可以通过 copy 函数来达到相同的目的：`copy(dst []byte, src string)`。
+
+
+
+同样的，还可以使用 for-range 来获得每个元素：
+
+```go
+package main
+import "fmt"
+func main() {
+    s := "\u00ff\u754c"
+    for i, c := range s {
+        fmt.Printf("%d:%c ", i, c)
+    }
+}
+// 输出
+// 0:ÿ 2:界
+```
+
+我们知道，Unicode 字符会占用 2 个字节，有些甚至需要 3 个或者 4 个字节来进行表示。如果发现错误的 UTF8 字符，则该字符会被设置为 U+FFFD 并且索引向前移动一个字节。和字符串转换一样，您同样可以使用 `c := []int32(s)` 语法，这样切片中的每个 int 都会包含对应的 Unicode 代码，因为字符串中的每个字符都会对应一个整数。类似的，您也可以将字符串转换为元素类型为 rune 的切片：`r := []rune(s)`。
+
+可以通过代码 `len([]int32(s))` 来获得字符串中字符的数量，但使用 `utf8.RuneCountInString(s)` 效率会更高一点。
+
+
+
+### 7.6.2 获取字符串的某一部分
+
+使用 `substr := str[start:end]` 可以从字符串 str 获取到从索引 start 开始到 `end-1` 位置的子字符串。同样的，`str[start:]` 则表示获取从 start 开始到 `len(str)-1` 位置的子字符串。而 `str[:end]` 表示获取从 0 开始到 `end-1` 的子字符串。
+
+
+
+## 7.6.3 字符串和切片的内存结构
+
+在内存中，一个字符串实际上是一个 **双字结构**，即 **一个指向实际数据的指针** 和 **另一个记录字符串长度的整数**（见图 7.4）。因为指针对用户来说是完全不可见，因此我们可以依旧把字符串看做是一个值类型，也就是一个 **字符数组**。
+
+字符串 `string s = "hello"` 和子字符串 `t = s[2:3]` 在内存中的结构可以用下图表示：
+
+![7.6_fig7.4-字符串内存结构](./images/7.6_fig7.4-字符串内存结构.png)
+
+
+
+### 7.6.4 修改字符串中的某个字符
+
+Go 语言中的字符串是不可变的，也就是说 `str[index]` 这样的表达式是不可以被放在等号左侧的。如果尝试运行 `str[i] = 'D'` 会得到错误：`cannot assign to str[i]`。
+
+因此，您必须先将字符串转换成字节数组，然后再通过修改数组中的元素值来达到修改字符串的目的，最后将字节数组转换回字符串格式。
+
+例如，将字符串 “hello” 转换为 “cello”：
+
+```go
+func main() {
+	s := "hello"
+	c := []byte(s)
+	c[0] = 'c'
+	s2 := string(c) // s2 == "cello"
+	fmt.Printf("s2=%v\n", s2)
+}
+```
+
+所以，您可以通过操作切片来完成对字符串的操作。
+
+
+
+### 7.6.5 字节数组对比函数
+
+下面的 `Compare` 函数会返回两个字节数组字典顺序的整数对比结果，
+
+即 `0 if a == b, -1 if a < b, 1 if a > b`。
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	a := []byte("你好，中国")
+	b := []byte("你好，中国")
+	fmt.Printf("Compare(a, b)=%v", Compare(a, b))
+}
+
+func Compare(a, b []byte) int {
+	for i := 0; i < len(a) && i < len(b); i++ {
+		switch {
+		case a[i] > b[i]:
+			return 1
+		case a[i] < b[i]:
+			return -1
+		}
+	}
+	// 数组的长度可能不同
+	switch {
+	case len(a) < len(b):
+		return -1
+	case len(a) > len(b):
+		return 1
+	}
+	return 0 // 数组相等
+}
+```
+
+
+
+### 7.6.6 搜索及排序切片和数组
+
+标准库提供了 `sort` **包** 来实现常见的搜索和排序操作。您可以使用 `sort` 包中的函数 `func Ints(a []int)` 来实现对 int 类型的切片排序。例如 `sort.Ints(arri)`，其中变量 arri 就是需要被升序排序的数组或切片。为了检查某个数组是否已经被排序，可以通过函数 `IntsAreSorted(a []int) bool` 来检查，如果返回 true 则表示已经被排序。
+
+类似的，可以使用函数 `func Float64s(a []float64)` 来排序 float64 的元素，或使用函数 `func Strings(a []string)` 排序字符串元素。
+
+想要在数组或切片中搜索一个元素，该数组或切片必须先被排序（因为标准库的搜索算法使用的是 **二分法**）。然后，您就可以使用函数 `func SearchInts(a []int, n int) int` 进行搜索，并返回对应结果的索引值。
+
+当然，还可以搜索 float64 和字符串：
+
+```go
+func SearchFloat64s(a []float64, x float64) int
+func SearchStrings(a []string, x string) int
+```
+
+您可以通过查看 [官方文档](http://golang.org/pkg/sort/) 来获取更详细的信息。
+
+这就是如何使用 `sort` 包的方法，我们会在第 11.6 节对它的细节进行深入，并实现一个属于我们自己的版本。
+
+
+
+### 7.6.7 append 函数常见操作
+
+我们在第 7.5 节提到的 append 非常有用，它能够用于各种方面的操作：
+
+1. 将切片 b 的元素追加到切片 a 之后：
+
+    ```go
+    a = append(a, b...)
+    ```
+
+2. 复制切片 a 的元素到新的切片 b 上：
+
+    ```go
+     b = make([]T, len(a))
+     copy(b, a)
+    ```
+
+3. 删除位于索引 i 的元素：
+
+    ```go
+    a = append(a[:i], a[i+1:]...)
+    ```
+
+4. 切除切片 a 中从索引 i 至 j 位置的元素：
+
+    ```go
+    a = append(a[:i], a[j:]...)
+    ```
+
+5. 为切片 a 扩展 j 个元素长度：
+
+    ```go
+    a = append(a, make([]T, j)...)
+    ```
+
+6. 在索引 i 的位置插入元素 x：
+
+    ```go
+    a = append(a[:i], append([]T{x}, a[i:]...)...)
+    ```
+
+7. 在索引 i 的位置插入长度为 j 的新切片：
+
+    ```go
+    a = append(a[:i], append(make([]T, j), a[i:]...)...)
+    ```
+
+8. 在索引 i 的位置插入切片 b 的所有元素：
+
+    ```go
+    a = append(a[:i], append(b, a[i:]...)...)
+    ```
+
+9. 取出位于切片 a 最末尾的元素 x：
+
+    ```go
+    x, a = a[len(a)-1], a[:len(a)-1]
+    ```
+
+10. 将元素 x 追加到切片 a：
+
+    ```go
+    a = append(a, x)
+    ```
+
+
+
+因此，您可以使用切片和 append 操作来表示任意可变长度的序列。
+
+从数学的角度来看，切片相当于向量，如果需要的话可以定义一个向量作为切片的别名来进行操作。
+
+如果您需要更加完整的方案，可以学习一下 Eleanor McHugh 编写的几个包：[slices](http://github.com/feyeleanor/slices)、[chain](http://github.com/feyeleanor/chain) 和 [lists](http://github.com/feyeleanor/lists)。
+
+
+
+### 7.6.8 切片和垃圾回收
+
+切片的底层指向一个数组，该数组的实际容量可能要大于切片所定义的容量。**只有在没有任何切片指向的时候**，底层的数组内存才会被释放，这种特性有时会导致程序占用多余的内存。
+
+**示例** 函数 `FindDigits` 将一个文件加载到内存，然后搜索其中所有的数字并返回一个切片。
+
+```go
+var digitRegexp = regexp.MustCompile("[0-9]+")
+func FindDigits(filename string) []byte {
+    b, _ := ioutil.ReadFile(filename)
+    return digitRegexp.Find(b)
+}
+```
+
+这段代码可以顺利运行，但返回的 `[]byte` 指向的底层是整个文件的数据。只要该返回的切片不被释放，垃圾回收器就不能释放整个文件所占用的内存。换句话说，一点点有用的数据却占用了整个文件的内存。
+
+想要避免这个问题，可以通过拷贝我们需要的部分到一个新的切片中：
+
+```go
+func FindDigits(filename string) []byte {
+   b, _ := ioutil.ReadFile(filename)
+   b = digitRegexp.Find(b)
+   c := make([]byte, len(b))
+   copy(c, b)
+   return c
+}
+```
+
+事实上，上面这段代码只能找到第一个匹配正则表达式的数字串。要想找到所有的数字，可以尝试下面这段代码：
+
+```go
+func FindFileDigits(filename string) []byte {
+   fileBytes, _ := ioutil.ReadFile(filename)
+   b := digitRegexp.FindAll(fileBytes, len(fileBytes))
+   c := make([]byte, 0)
+   for _, bytes := range b {
+      c = append(c, bytes...)
+   }
+   return c
+}
+```
+
+
+
+---
+
+
+
+# 第8章 Map
+
+map 是一种特殊的数据结构：一种元素对（pair）的无序集合，pair 的一个元素是 key，对应的另一个元素是 value，所以这个结构也称为关联数组或字典。这是一种快速寻找值的理想结构：给定 key，对应的 value 可以迅速定位。
+
+map 这种数据结构在其他编程语言中也称为字典（Python）、hash 和 HashTable 等。
+
+
+
+## 8.1 声明、初始化和 make
+
+### 8.1.1 概念
+
+map 是引用类型，可以使用如下声明：
+
+```go
+var map1 map[keytype]valuetype
+var map1 map[string]int
+```
+
+（`[keytype]` 和 `valuetype` 之间允许有空格，但是 gofmt 移除了空格）
+
+在声明的时候不需要知道 map 的长度，map 是可以动态增长的。
+
+未初始化的 map 的值是 nil。
+
+key 可以是任意可以用 == 或者 != 操作符比较的类型，比如 string、int、float。所以数组、切片和结构体不能作为 key (译者注：含有数组切片的结构体不能作为 key，只包含内建类型的 struct 是可以作为 key 的），但是指针和接口类型可以。如果要用结构体作为 key 可以提供 `Key()` 和 `Hash()` 方法，这样可以通过结构体的域计算出唯一的数字或者字符串的 key。
+
+value 可以是任意类型的；通过使用空接口类型（详见第 11.9 节），我们可以存储任意值，但是使用这种类型作为值时需要先做一次类型断言（详见第 11.3 节）。
+
+map 传递给函数的代价很小：在 32 位机器上占 4 个字节，64 位机器上占 8 个字节，无论实际上存储了多少数据。通过 key 在 map 中寻找值是很快的，比线性查找快得多，但是仍然比从数组和切片的索引中直接读取要慢 100 倍；所以如果你很在乎性能的话还是建议用切片来解决问题。
+
+map 也可以用函数作为自己的值，这样就可以用来做分支结构（详见第 5 章）：key 用来选择要执行的函数。
+
+如果 key1 是 map1 的key，那么 `map1[key1]` 就是对应 key1 的值，就如同数组索引符号一样（数组可以视为一种简单形式的 map，key 是从 0 开始的整数）。
+
+key1 对应的值可以通过赋值符号来设置为 val1：`map1[key1] = val1`。
+
+令 `v := map1[key1]` 可以将 key1 对应的值赋值给 v；如果 map 中没有 key1 存在，那么 v 将被赋值为 map1 的值类型的空值。
+
+常用的 `len(map1)` 方法可以获得 map 中的 pair 数目，这个数目是可以伸缩的，因为 map-pairs 在运行时可以动态添加和删除。
+
+
+
+示例:
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	var mapLit map[string]int
+	// var mapCreated map[string]float32
+	var mapAssigned map[string]int
+	mapLit = map[string]int{"one": 1, "two": 2}
+	mapCreated := make(map[string]float32)
+	mapAssigned = mapLit
+	mapCreated["key1"] = 4.5
+	mapCreated["key2"] = 3.14159
+	mapAssigned["two"] = 3
+	fmt.Printf("Map literal at \"one\" is: %d\n", mapLit["one"])
+	fmt.Printf("Map created at \"key2\" is: %f\n", mapCreated["key2"])
+	fmt.Printf("Map assigned at \"two\" is: %d\n", mapLit["two"])
+	fmt.Printf("Map literal at \"ten\" is: %d\n", mapLit["ten"])
+}
+```
+
+mapLit 说明了 `map literals` 的使用方法： map 可以用 `{key1: val1, key2: val2}` 的描述方法来初始化，就像数组和结构体一样。
+
+map 是 **引用类型** 的： 内存用 make 方法来分配。
+
+map 的初始化：`var map1 = make(map[keytype]valuetype)`。
+
+或者简写为：`map1 := make(map[keytype]valuetype)`。
+
+上面例子中的 mapCreated 就是用这种方式创建的：`mapCreated := make(map[string]float32)`。
+
+相当于：`mapCreated := map[string]float32{}`。
+
+mapAssigned 也是 mapLit 的引用，对 mapAssigned 的修改也会影响到 mapLit 的值。
+
+**不要使用 new，永远用 make 来构造 map**
+
+**注意** 如果你错误的使用 new() 分配了一个引用对象，你会获得一个空引用的指针，相当于声明了一个未初始化的变量并且取了它的地址：
+
+```go
+mapCreated1 := new(map[string]float32)
+mapCreated1["asd"] = 1.1 // invalid operation: mapCreated1["asd"] (type *map[string]float32 does not support indexing)
+```
+
+
+
+### 8.1.2 map 容量
+
+和数组不同，map 可以根据新增的 key-value 对动态的伸缩，因此它不存在固定长度或者最大限制。但是你也可以选择标明 map 的初始容量 `capacity`，就像这样：`make(map[keytype]valuetype, cap)`。例如：
+
+```go
+map2 := make(map[string]float32,100)
+```
+
+当 map 增长到容量上限的时候，如果再增加新的 key-value 对，map 的大小会自动加 1。所以出于性能的考虑，对于大的 map 或者会快速扩张的 map，即使只是大概知道容量，也最好先标明。
+
+
+
+### 8.1.3 用切片作为 map 的值
+
+既然一个 key 只能对应一个 value，而 value 又是一个原始类型，那么如果一个 key 要对应多个值怎么办？例如，当我们要处理unix机器上的所有进程，以父进程（pid 为整型）作为 key，所有的子进程（以所有子进程的 pid 组成的切片）作为 value。通过将 value 定义为 `[]int` 类型或者其他类型的切片，就可以优雅的解决这个问题。
+
+这里有一些定义这种 map 的例子：
+
+```go
+mp1 := make(map[int][]int)
+mp2 := make(map[int]*[]int)
+```
+
+
+
+## 8.2 测试键值对是否存在及删除元素
+
+- 测试键值对是否存在，我们可以这么用：
+
+    ```go
+    val1, isPresent := map1[key1]
+    ```
+
+    - isPresent 返回一个 bool 值：如果 key1 存在于 map1，val1 就是 key1 对应的 value 值，并且 isPresent为true；如果 key1 不存在，val1 就是一个空值，并且 isPresent 会返回 false。
+
+- 如果你只是想判断某个 key 是否存在而不关心它对应的值到底是多少，你可以这么做：
+
+    ```go
+    _, ok := map1[key1] // 如果key1存在则ok == true，否则ok为false
+    ```
+
+- 或者和 if 混合使用：
+
+    ```go
+    if _, ok := map1[key1]; ok {
+        // ...
+    }
+    ```
+
+
+
+- 从 map1 中删除 key1：
+
+    直接 `delete(map1, key1)` 就可以。
+
+    如果 key1 不存在，该操作不会产生错误。
+
+
+
+## 8.3 for-range 的配套用法
+
+可以使用 for 循环构造 map：
+
+```go
+for key, value := range map1 {
+    ...
+}
+```
+
+第一个返回值 key 是 map 中的 key 值，第二个返回值则是该 key 对应的 value 值；这两个都是仅 for 循环内部可见的局部变量。其中第一个返回值key值是一个可选元素。如果你只关心值，可以这么使用：
+
+```go
+for _, value := range map1 {
+    ...
+}
+```
+
+如果只想获取 key，你可以这么使用：
+
+```go
+for key := range map1 {
+    fmt.Printf("key is: %d\n", key)
+}
+```
+
+- 注意 map 不是按照 key 的顺序排列的，也不是按照 value 的序排列的。
+
+
+
+## 8.4 map 类型的切片
+
+假设我们想获取一个 map 类型的切片，我们必须使用两次 `make()` 函数，第一次分配切片，第二次分配 切片中每个 map 元素。
+
+```go
+package main
+import "fmt"
+func main() {
+    // Version A:
+    items := make([]map[int]int, 5)
+    for i:= range items {
+        items[i] = make(map[int]int, 1)
+        items[i][1] = 2
+    }
+    fmt.Printf("Version A: Value of items: %v\n", items)
+    // Version B: NOT GOOD!
+    items2 := make([]map[int]int, 5)
+    for _, item := range items2 {
+        item = make(map[int]int, 1) // item is only a copy of the slice element.
+        item[1] = 2 // This 'item' will be lost on the next iteration.
+    }
+    fmt.Printf("Version B: Value of items: %v\n", items2)
+}
+
+// 输出结果
+// Version A: Value of items: [map[1:2] map[1:2] map[1:2] map[1:2] map[1:2]]
+// Version B: Value of items: [map[] map[] map[] map[] map[]]
+```
+
+需要注意的是，应当像 A 版本那样通过索引使用切片的 map 元素。在 B 版本中获得的项只是 map 值的一个拷贝而已，所以真正的 map 元素没有得到初始化。
+
+
+
+## 8.5 map 的排序
+
+map 默认是无序的，不管是按照 key 还是按照 value 默认都不排序（详见第 8.3 节）。
+
+如果你想为 map 排序，需要将 key（或者 value）拷贝到一个切片，再对切片排序（使用 sort 包，详见第 7.6.6 节），然后可以使用切片的 for-range 方法打印出所有的 key 和 value。
+
+下面有一个示例：
+
+```go
+// the telephone alphabet:
+package main
+
+import (
+	"fmt"
+	"sort"
+)
+
+var (
+	barVal = map[string]int{
+		"alpha": 34, "bravo": 56, "charlie": 23,
+		"delta": 87, "echo": 56, "foxtrot": 12,
+		"golf": 34, "hotel": 16, "indio": 87,
+		"juliet": 65, "kili": 43, "lima": 98}
+)
+
+func main() {
+	fmt.Println("unsorted:")
+	for k, v := range barVal {
+		fmt.Printf("Key: %v, Value: %v / ", k, v)
+	}
+	keys := make([]string, len(barVal))
+	i := 0
+	for k, _ := range barVal {
+		keys[i] = k
+		i++
+	}
+	sort.Strings(keys)
+	fmt.Println()
+	fmt.Println("sorted:")
+	for _, k := range keys {
+		fmt.Printf("Key: %v, Value: %v / ", k, barVal[k])
+	}
+}
+```
+
+
+
+## 8.6 将 map 的键值对调
+
+这里对调是指调换 key 和 value。如果 map 的值类型可以作为 key 且所有的 value 是唯一的，那么通过下面的方法可以简单的做到键值对调。
+
+```go
+package main
+
+import (
+	"fmt"
+)
+
+var (
+	barVal = map[string]int{"alpha": 34, "bravo": 56, "charlie": 23,
+		"delta": 87, "echo": 56, "foxtrot": 12,
+		"golf": 34, "hotel": 16, "indio": 87,
+		"juliet": 65, "kili": 43, "lima": 98}
+)
+
+func main() {
+	invMap := make(map[int]string, len(barVal))
+	for k, v := range barVal {
+		invMap[v] = k
+	}
+	fmt.Println("inverted:")
+	for k, v := range invMap {
+		fmt.Printf("Key: %v, Value: %v / ", k, v)
+	}
+}
+```
+
+如果原始 value 值不唯一那这么做肯定会出问题；这种情况下不会报错，但是当遇到不唯一的 key 时应当直接停止对调，且此时对调后的 map 很可能没有包含原 map 的所有键值对！一种解决方法就是仔细检查唯一性并且使用多值 map，比如使用 `map[int][]string` 类型。
+
+
+
+---
+
+
+
+# 第9章 包（package）
 
