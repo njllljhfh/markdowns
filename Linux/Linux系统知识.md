@@ -438,3 +438,33 @@ nohup python3 -u image_collector_atesi.py -s /APP/testimg/ -o ./image_collector_
 
 ---
 
+
+
+## Ubuntu18.04 安装 zabbix4.0
+
+邮箱配置：[参考链接](https://blog.csdn.net/abcdu1/article/details/89850898)
+
+- 第三方授权码，在浏览器登录邮件，然后获取。
+
+![zabbix邮箱配置](.\image\zabbix邮箱配置.png)
+
+
+
+---
+
+
+
+## ubuntu18.04查看端口占用
+
+```shell
+sudo netstat -anp |grep 3306
+```
+
+
+
+根据名称查看进程号，并kill
+
+```shell
+ps -ef | grep uwsgi | grep -v grep | awk '{print $2}' | xargs kill -9
+```
+
