@@ -2035,7 +2035,7 @@ func main() {
 
 
 
-## 7.6.3 字符串和切片的内存结构
+### 7.6.3 字符串和切片的内存结构
 
 在内存中，一个字符串实际上是一个 **双字结构**，即 **一个指向实际数据的指针** 和 **另一个记录字符串长度的整数**（见图 7.4）。因为指针对用户来说是完全不可见，因此我们可以依旧把字符串看做是一个值类型，也就是一个 **字符数组**。
 
@@ -3029,7 +3029,7 @@ func main() {
 
 ## 10.4 带标签的结构体
 
-结构体中的字段除了有名字和类型外，还可以有一个可选的标签（tag）：它是一个附属于字段的字符串，可以是文档或其他的重要标记。标签的内容不可以在一般的编程中使用，只有包 `reflect` 能获取它。我们将在下一章（第 [11.10 节](https://www.bookstack.cn/read/the-way-to-go_ZH_CN/eBook-11.10.md)）中深入的探讨 `reflect`包，它可以在运行时自省类型、属性和方法，比如：在一个变量上调用 `reflect.TypeOf()` 可以获取变量的正确类型，如果变量是一个结构体类型，就可以通过 Field 来索引结构体的字段，然后就可以使用 Tag 属性。
+结构体中的字段除了有名字和类型外，还可以有一个可选的 **标签（tag）**：它是一个附属于字段的字符串，可以是文档或其他的重要标记。标签的内容不可以在一般的编程中使用，只有包 `reflect` 能获取它。我们将在下一章（第 [11.10 节](https://www.bookstack.cn/read/the-way-to-go_ZH_CN/eBook-11.10.md)）中深入的探讨 `reflect` 包，它可以在 **运行时** 自省类型、属性和方法，比如：在一个变量上调用 `reflect.TypeOf()` 可以获取变量的正确类型，如果变量是一个结构体类型，就可以通过 `Field()` 来索引结构体的字段，然后就可以使用 `Tag` 属性。
 
 ```go
 package main
@@ -3357,6 +3357,8 @@ var d D
 
     **指针方法和值方法都可以在指针或非指针上被调用**，如下面程序所示，类型 `List` 在值上有一个方法 `Len()`，在指针上有一个方法 `Append()`，但是可以看到两个方法都可以在两种类型的变量上被调用。
 
+    示例 10.14 methodset1.go：
+    
     ```go
     package main
     
@@ -3862,6 +3864,8 @@ Go 语言不是一种 *“传统”* 的面向对象编程语言：它里面没�
 
     - 第一个例子：
 
+        示例 11.1 interfaces.go：
+    
         ```go
         package main
         
@@ -3906,7 +3910,7 @@ Go 语言不是一种 *“传统”* 的面向对象编程语言：它里面没�
         这是 **多态** 的 Go 版本，多态是面向对象编程中一个广为人知的概念：根据当前的类型选择正确的方法，或者说：同一种类型在不同的实例上似乎表现出不同的行为。
 
         如果 `Square` 没有实现 `Area()` 方法，编译器将会给出清晰的错误信息：
-
+    
         ```go
         cannot use sq1 (type *Square) as type Shaper in assignment:
         *Square does not implement Shaper (missing Area method)
@@ -3915,7 +3919,9 @@ Go 语言不是一种 *“传统”* 的面向对象编程语言：它里面没�
         如果 `Shaper` 有另外一个方法 `Perimeter()`，但是`Square` 没有实现它，即使没有人在 `Square` 实例上调用这个方法，编译器也会给出上面同样的错误。
 
     - 扩展一下上面的例子，类型 `Rectangle` 也实现了 `Shaper` 接口。接着创建一个 `Shaper` 类型的数组，迭代它的每一个元素并在上面调用 `Area()` 方法，以此来展示多态行为：
-
+    
+        示例 11.2 interfaces_poly.go：
+    
         ```go
         package main
         
@@ -3965,9 +3971,11 @@ Go 语言不是一种 *“传统”* 的面向对象编程语言：它里面没�
         在调用 `shapes[n].Area()` 这个时，只知道 `shapes[n]` 是一个 `Shaper` 对象，最后它摇身一变成为了一个 `Square` 或 `Rectangle` 对象，并且表现出了相对应的行为。
 
         也许从现在开始你将看到通过接口如何产生 **更干净**、**更简单** 及 **更具有扩展性** 的代码。在 11.12.3 中将看到在开发中为类型添加新的接口是多么的容易。
-
+    
     - 下面是一个更具体的例子：有两个类型 `stockPosition` 和 `car`，它们都有一个 `getValue()` 方法，我们可以定义一个具有此方法的接口 `valuable`。接着定义一个使用 `valuable` 类型作为参数的函数 `showValue()`，所有实现了 `valuable` 接口的类型都可以用这个函数。
-
+    
+        示例 11.3 valuable.go：
+    
         ```go
         package main
         
@@ -4015,9 +4023,9 @@ Go 语言不是一种 *“传统”* 的面向对象编程语言：它里面没�
         // Value of the asset is 2308.800049
         // Value of the asset is 66500.000000
         ```
-
+    
     - **一个标准库的例子**
-
+    
         `io` 包里有一个接口类型 `Reader`:
 
         ```go
@@ -4025,11 +4033,11 @@ Go 语言不是一种 *“传统”* 的面向对象编程语言：它里面没�
             Read(p []byte) (n int, err error)
         }
         ```
-
+    
         定义变量 `r`：`var r io.Reader`
-
+    
         那么就可以写如下的代码：
-
+    
         ```go
         var r io.Reader
         r = os.Stdin    // see 12.1
@@ -4038,7 +4046,7 @@ Go 语言不是一种 *“传统”* 的面向对象编程语言：它里面没�
         f,_ := os.Open("test.txt")
         r = bufio.NewReader(f)
         ```
-
+    
         上面 `r` 右边的类型都实现了 `Read()` 方法，并且有相同的方法签名，`r` 的静态类型是 `io.Reader`。
 
 
@@ -4309,8 +4317,1281 @@ func classifier(items ...interface{}) {
 
 ## 11.5 测试一个值是否实现了某个接口
 
-这是 11.3 类型断言中的一个特例：假定 `v` 是一个值，然后我们想测试它是否实现了 `Stringer` 接口，可以这样做：
+首先golang是强类型的语言，如果类型不匹配的话编译就通不过，所以一个对象是否实现了某个接口根本就不需要判断，看这个的对象的类型就知道了。
+
+之所以会有这样的问题，是因为一个对象的类型可能是未知的，具体表现就是它是一个接口，要么是空接口 interface{}, 要么是非空接口 interfaceA。
+
+这是 [11.3 类型断言](#11.3 类型断言：如何检测和转换接口变量的类型) 中的一个特例：假定 `v` 是一个值（**v是接口变量**），然后我们想测试它是否实现了 `Stringer` 接口，可以这样做：(njl：**下面的方法会报错**)
 
 ```go
+package main
 
+import (
+	"fmt"
+	"strconv"
+)
+
+type Stringer interface {
+	String() string
+}
+
+type myInt int
+
+func (v myInt) String() string {
+	return strconv.Itoa(int(v))
+}
+
+func main() {
+    // v := myInt(6)  // 会报错 invalid type assertion: v.(Stringer) (non-interface type myInt on left)
+    var v Stringer  // 注意: v是接口类型的变量
+	v = myInt(6)
+	if sv, ok := v.(Stringer); ok {
+		fmt.Printf("v implements String(): %s\n", sv.String()) // note: sv, not v
+	}
+}
 ```
+
+接口是一种契约，实现类型必须满足它，它描述了类型的行为，规定类型可以做什么。接口彻底将类型能做什么，以及如何做分离开来，使得相同接口的变量在不同的时刻表现出不同的行为，这就是多态的本质。
+
+编写参数是接口变量的函数，这使得它们更具有一般性。
+
+**使用接口使代码更具有普适性。**
+
+标准库里到处都使用了这个原则，如果对接口概念没有良好的把握，是不可能理解它是如何构建的。
+
+在接下来的章节中，我们会讨论两个重要的例子，试着去深入理解它们，这样你就可以更好的应用上面的原则。
+
+
+
+## 11.6 使用方法集与接口
+
+在第 10.6.3 节及例子 methodset1.go 中我们看到，作用于变量上的方法实际上是不区分变量到底是指针还是值的。当碰到接口类型值时，这会变得有点复杂，原因是 **接口变量中存储的具体值是不可寻址的**，幸运的是，如果使用不当编译器会给出错误。考虑下面的程序：
+
+示例 11.5 methodset2.go：
+
+```go
+package main
+
+import (
+	"fmt"
+)
+
+type Lener interface {
+	Len() int
+}
+
+type Appender interface {
+	Append(int)
+}
+
+type List []int
+
+func (l List) Len() int {
+	return len(l)
+}
+
+func (l *List) Append(val int) {
+	*l = append(*l, val)
+}
+
+func CountInto(a Appender, start, end int) {
+	for i := start; i <= end; i++ {
+		a.Append(i)
+	}
+}
+
+func LongEnough(l Lener) bool {
+	return l.Len()*10 > 42
+}
+
+func main() {
+	// A bare value
+	var lst List
+	// compiler error:
+	// cannot use lst (type List) as type Appender in argument to CountInto:
+	//       List does not implement Appender (Append method has pointer receiver)
+	// CountInto(lst, 1, 10)
+	if LongEnough(lst) { // VALID:Identical receiver type
+		fmt.Printf("- lst is long enough\n")
+	}
+
+	// A pointer value
+	plst := new(List)
+	CountInto(plst, 1, 10) // VALID:Identical receiver type
+	if LongEnough(plst) {
+		// VALID: a *List can be dereferenced for the receiver
+		fmt.Printf("- plst is long enough\n")
+	}
+}
+```
+
+**讨论**
+
+- 在 `lst` 上调用 `CountInto` 时会导致一个编译器错误，因为 `CountInto` 需要一个 `Appender`，而它的方法 `Append` 只定义在指针上。 在 `lst` 上调用 `LongEnough` 是可以的，因为 `Len` 定义在值上。
+
+- 在 `plst` 上调用 `CountInto` 是可以的，因为 `CountInto` 需要一个 `Appender`，并且它的方法 `Append` 定义在指针上。 在 `plst` 上调用 `LongEnough` 也是可以的，因为指针会被自动 **解引用**。
+
+
+
+**总结**
+
+**在接口上调用方法时！！！**，必须有和方法定义时相同的接收者类型或者是可以从具体类型 `P` 直接可以辨识的：
+
+- 指针方法可以通过指针调用
+- 值方法可以通过值调用
+- 接收者是值的方法可以通过指针调用，因为指针会首先被 **解引用**
+- 接收者是指针的方法**不可以**通过值调用，因为**存储在接口变量中的值没有地址**
+
+将一个值赋值给一个接口变量时，编译器会确保所有可能的接口方法都可以在此值上被调用，因此**不正确的赋值在编译期就会失败**。
+
+
+
+## 11.7 第一个例子：使用 Sorter 接口排序
+
+一个很好的例子是来自标准库的 `sort` 包，要对一组数字或字符串排序，只需要实现三个方法：反映元素个数的 `Len()`方法、比较第 `i` 和 `j` 个元素的 `Less(i, j)` 方法以及交换第 `i` 和 `j` 个元素的 `Swap(i, j)` 方法。
+
+示例 11.6 sort.go：
+
+```go
+package sort
+
+type Sorter interface {
+	Len() int
+	Less(i, j int) bool
+	Swap(i, j int)
+}
+
+// bubble sort
+func Sort(data Sorter) {
+	for pass := 1; pass < data.Len(); pass++ {
+		for i := 0; i < data.Len()-pass; i++ {
+			if data.Less(i+1, i) {
+				data.Swap(i, i+1)
+			}
+		}
+	}
+}
+
+func IsSorted(data Sorter) bool {
+	n := data.Len()
+	for i := n - 1; i > 0; i-- {
+		if data.Less(i, i-1) {
+			return false
+		}
+	}
+	return true
+}
+
+// Convenience types for common cases
+type IntArray []int
+
+func (p IntArray) Len() int           { return len(p) }
+func (p IntArray) Less(i, j int) bool { return p[i] < p[j] }
+func (p IntArray) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+
+type StringArray []string
+
+func (p StringArray) Len() int           { return len(p) }
+func (p StringArray) Less(i, j int) bool { return p[i] < p[j] }
+func (p StringArray) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+
+// Convenience wrappers for common cases
+func SortInts(a []int)                 { Sort(IntArray(a)) }
+func SortStrings(a []string)           { Sort(StringArray(a)) }
+func IntsAreSorted(a []int) bool       { return IsSorted(IntArray(a)) }
+func StringsAreSorted(a []string) bool { return IsSorted(StringArray(a)) }
+```
+
+示例 11.7 sortmain.go：
+
+```go
+package main
+
+import (
+    "./sort"
+    "fmt"
+)
+
+func ints() {
+    data := []int{74, 59, 238, -784, 9845, 959, 905, 0, 0, 42, 7586, -5467984, 7586}
+    a := sort.IntArray(data) // conversion to type IntArray
+    sort.Sort(a)
+    if !sort.IsSorted(a) {
+        panic("fails")
+    }
+    fmt.Printf("The sorted array is: %v\n", a)
+}
+
+func strings() {
+    data := []string{"monday", "friday", "tuesday", "wednesday", "sunday", "thursday", "", "saturday"}
+    a := sort.StringArray(data)
+    sort.Sort(a)
+    if !sort.IsSorted(a) {
+        panic("fail")
+    }
+    fmt.Printf("The sorted array is: %v\n", a)
+}
+
+type day struct {
+    num       int
+    shortName string
+    longName  string
+}
+
+type dayArray struct {
+    data []*day
+}
+
+func (p *dayArray) Len() int           { return len(p.data) }
+func (p *dayArray) Less(i, j int) bool { return p.data[i].num < p.data[j].num }
+func (p *dayArray) Swap(i, j int)      { p.data[i], p.data[j] = p.data[j], p.data[i] }
+func days() {
+    Sunday := day{0, "SUN", "Sunday"}
+    Monday := day{1, "MON", "Monday"}
+    Tuesday := day{2, "TUE", "Tuesday"}
+    Wednesday := day{3, "WED", "Wednesday"}
+    Thursday := day{4, "THU", "Thursday"}
+    Friday := day{5, "FRI", "Friday"}
+    Saturday := day{6, "SAT", "Saturday"}
+    data := []*day{&Tuesday, &Thursday, &Wednesday, &Sunday, &Monday, &Friday, &Saturday}
+    a := dayArray{data}
+    sort.Sort(&a)
+    if !sort.IsSorted(&a) {
+        panic("fail")
+    }
+    for _, d := range data {
+        fmt.Printf("%s ", d.longName)
+    }
+    fmt.Printf("\n")
+}
+
+func main() {
+    ints()
+    strings()
+    days()
+}
+```
+
+**备注**：
+
+`panic("fail")` 用于停止处于在非正常情况下的程序（详细请参考 第13章），当然也可以先打印一条信息，然后调用 `os.Exit(1)` 来停止程序。
+
+上面的例子帮助我们进一步了解了接口的意义和使用方式。对于基本类型的排序，标准库已经提供了相关的排序函数，所以不需要我们再重复造轮子了。对于一般性的排序，`sort` 包定义了一个接口：
+
+```go
+type Interface interface {
+    Len() int
+    Less(i, j int) bool
+    Swap(i, j int)
+}
+```
+
+这个接口总结了需要用于排序的抽象方法，函数 `Sort(data Interface)` 用来对此类对象进行排序，可以用它们来实现对其他类型的数据（非基本类型）进行排序。在上面的例子中，我们也是这么做的，不仅可以对 `int` 和 `string` 序列进行排序，也可以对用户自定义类型 `dayArray` 进行排序。
+
+
+
+## 11.8 第二个例子：读和写
+
+读和写是软件中很普遍的行为，提起它们会立即想到读写文件、缓存（比如字节或字符串切片）、标准输入输出、标准错误以及网络连接、管道等等，或者读写我们的自定义类型。为了让代码尽可能通用，Go 采取了一致的方式来读写数据。
+
+`io` 包提供了用于读和写的接口 `io.Reader` 和 `io.Writer`：
+
+```go
+type Reader interface {
+    Read(p []byte) (n int, err error)
+}
+
+type Writer interface {
+    Write(p []byte) (n int, err error)
+}
+```
+
+只要类型实现了读写接口，提供 `Read()` 和 `Write()` 方法，就可以从它读取数据，或向它写入数据。一个对象要是可读的，它必须实现 `io.Reader` 接口，这个接口只有一个签名是 `Read(p []byte) (n int, err error)` 的方法，它从调用它的对象上读取数据，并把读到的数据放入参数中的字节切片中，然后返回读取的字节数和一个 `error` 对象，如果没有错误发生返回 `nil`，如果已经到达输入的尾端，会返回 `io.EOF("EOF")`，如果读取的过程中发生了错误，就会返回具体的错误信息。类似地，一个对象要是可写的，它必须实现 `io.Writer` 接口，这个接口也只有一个签名是 `Write(p []byte) (n int, err error)` 的方法，它将指定字节切片中的数据写入调用它的对象里，然后返回实际写入的字节数和一个 `error` 对象（如果没有错误发生就是 `nil`）。
+
+`io` 包里的 `Readers` 和 `Writers` 都是不带缓冲的，`bufio` 包里提供了对应的带缓冲的操作，在读写 `UTF-8` 编码的文本文件时它们尤其有用。在 第12章 我们会看到很多在实战中使用它们的例子。
+
+在实际编程中尽可能的使用这些接口，会使程序变得更通用，可以在任何实现了这些接口的类型上使用读写方法。
+
+例如一个 `JPEG` 图形解码器，通过一个 `Reader` 参数，它可以解码来自磁盘、网络连接或以 `gzip` 压缩的 `HTTP` 流中的 `JPEG` 图形数据，或者其他任何实现了 `Reader` 接口的对象。
+
+
+
+## 11.9 空接口
+
+### 11.9.1 概念
+
+**空接口或者最小接口** 不包含任何方法，它对实现不做任何要求：
+
+```go
+type Any interface {}
+```
+
+任何其他类型都实现了空接口（它不仅仅像 `Java/C#` 中 `Object` 引用类型），`any` 或 `Any` 是空接口一个很好的别名或缩写。
+
+空接口类似 `Java/C#` 中所有类的基类： `Object` 类，二者的目标也很相近。
+
+可以给一个空接口类型的变量 `var val interface {}` 赋任何类型的值。
+
+示例 11.8 empty_interface.go：
+
+```go
+package main
+
+import "fmt"
+
+var i = 5
+var str = "ABC"
+
+type Person struct {
+	name string
+	age  int
+}
+
+type Any interface{}
+
+func main() {
+	var val Any
+	val = i
+	fmt.Printf("val has the value: %v\n", val)
+
+	val = str
+	fmt.Printf("val has the value: %v\n", val)
+
+	pers1 := new(Person)
+	pers1.name = "Rob Pike"
+	pers1.age = 55
+	val = pers1
+	fmt.Printf("val has the value: %v\n", val)
+
+	switch t := val.(type) {
+	case int:
+		fmt.Printf("Type int %T\n", t)
+	case string:
+		fmt.Printf("Type string %T\n", t)
+	case bool:
+		fmt.Printf("Type boolean %T\n", t)
+	case *Person:
+		fmt.Printf("Type pointer to Person %T\n", t)
+	default:
+		fmt.Printf("Unexpected type %T", t)
+	}
+}
+// 输出结果
+// val has the value: 5
+// val has the value: ABC
+// val has the value: &{Rob Pike 55}
+// Type pointer to Person *main.Person
+```
+
+在上面的例子中，接口变量 `val` 被依次赋予一个 `int`，`string` 和 `Person` 实例的值，然后使用 `type-switch` 来测试它的实际类型。每个 `interface {}` 变量在内存中占据 **两个字长**：一个用来存储它包含的类型，另一个用来存储它包含的数据或者指向数据的指针。
+
+示例  emptyint_switch.go 说明了空接口在 `type-switch` 中联合 `lambda` 函数(匿名函数)的用法：
+
+```go
+package main
+
+import "fmt"
+
+type specialString string
+
+var whatIsThis specialString = "hello"
+
+func TypeSwitch() {
+	testFunc := func(any interface{}) {
+		switch v := any.(type) {
+		case bool:
+			fmt.Printf("any %v is a bool type", v)
+		case int:
+			fmt.Printf("any %v is an int type", v)
+		case float32:
+			fmt.Printf("any %v is a float32 type", v)
+		case string:
+			fmt.Printf("any %v is a string type", v)
+		case specialString:
+			fmt.Printf("any %v is a special String!", v)
+		default:
+			fmt.Println("unknown type!")
+		}
+	}
+	testFunc(whatIsThis)
+}
+
+func main() {
+	TypeSwitch()
+}
+// 输出：
+// any hello is a special String!
+```
+
+
+
+### 11.9.2 构建通用类型或包含不同类型变量的数组
+
+在 7.6.6 中我们看到了能被搜索和排序的 `int` 数组、`float` 数组以及 `string` 数组，那么对于其他类型的数组呢，是不是我们必须得自己编程实现它们？
+
+现在我们知道该怎么做了，就是通过使用空接口。让我们给空接口定一个别名类型 `Element`：`type Element interface{}`
+
+然后定义一个容器类型的结构体 `Vector`，它包含一个 `Element` 类型元素的切片：
+
+```go
+type Vector struct {
+    a []Element
+}
+```
+
+`Vector` 里能放任何类型的变量，因为 **任何类型都实现了空接口**，实际上 `Vector` 里放的每个元素可以是不同类型的变量。我们为它定义一个 `At()` 方法用于返回第 `i` 个元素：
+
+```go
+func (p *Vector) At(i int) Element {
+    return p.a[i]
+}
+```
+
+再定一个 `Set()` 方法用于设置第 `i` 个元素的值：
+
+```go
+func (p *Vector) Set(i int, e Element) {
+    p.a[i] = e
+}
+```
+
+`Vector` 中存储的所有元素都是 `Element` 类型，要得到它们的原始类型（unboxing：拆箱）需要用到 **类型断言**。
+
+**类型断言** 总是在运行时才执行，因此它会产生运行时错误。
+
+
+
+### 11.9.3 复制数据切片至空接口切片
+
+假设你有一个 `myType` 类型的数据切片，你想将切片中的数据复制到一个空接口切片中，类似：
+
+```go
+package main
+
+import "fmt"
+
+type myType int
+
+func FuncReturnSlice() []myType {
+	return []myType{myType(1), myType(2), myType(3)}
+}
+func main() {
+	var dataSlice []myType = FuncReturnSlice()
+	var interfaceSlice []interface{} = dataSlice
+	fmt.Printf("interfaceSlice=%v", interfaceSlice)
+}
+```
+
+可惜不能这么做，编译时会出错：
+
+```go
+cannot use dataSlice (type []myType) as type []interface {} in assignment
+```
+
+原因是它们俩在内存中的布局是不一样的（参考 [Go wiki](https://github.com/golang/go/wiki/InterfaceSlice)）。
+
+必须使用 `for-range` 语句来一个一个显式地赋值：
+
+```go
+package main
+
+import "fmt"
+
+type myType int
+
+func FuncReturnSlice() []myType {
+	return []myType{myType(1), myType(2), myType(3)}
+}
+func main() {
+	var dataSlice []myType = FuncReturnSlice()
+	var interfaceSlice []interface{} = make([]interface{}, len(dataSlice))
+	for i, d := range dataSlice {
+		interfaceSlice[i] = d
+	}
+	fmt.Printf("interfaceSlice=%v", interfaceSlice)
+}
+```
+
+
+
+### 11.9.4 通用类型的节点数据结构
+
+在10.1中我们遇到了诸如列表和树这样的数据结构，在它们的定义中使用了一种叫节点的递归结构体类型，节点包含一个某种类型的数据字段。现在可以使用空接口作为数据字段的类型，这样我们就能写出通用的代码。下面是实现一个二叉树的部分代码：通用定义、用于创建空节点的 `NewNode` 方法，及设置数据的 `SetData` 方法。
+
+示例 11.10 node_structures.go：
+
+```go
+package main
+
+import "fmt"
+
+type Node struct {
+	le   *Node
+	data interface{}
+	ri   *Node
+}
+
+func NewNode(left, right *Node) *Node {
+	return &Node{left, nil, right}
+}
+
+func (n *Node) SetData(data interface{}) {
+	n.data = data
+}
+
+func main() {
+	root := NewNode(nil, nil)
+	root.SetData("root node")
+	// make child (leaf) nodes:
+	a := NewNode(nil, nil)
+	a.SetData("left node")
+	b := NewNode(nil, nil)
+	b.SetData("right node")
+	root.le = a
+	root.ri = b
+	fmt.Printf("%v\n", root) // Output: &{0x125275f0 root node 0x125275e0}
+}
+```
+
+
+
+### 11.9.5 接口到接口
+
+一个接口的值可以赋值给另一个接口变量，只要底层类型实现了必要的方法。这个转换是在运行时进行检查的，转换失败会导致一个运行时错误：这是 `Go` 语言动态的一面，可以拿它和 `Ruby` 和 `Python` 这些动态语言相比较。
+
+示例：
+
+```go
+package main
+
+type AbsInterface interface {
+	Abs()
+}
+
+type SqrInterface interface {
+	Sqr() float64
+}
+
+type Point struct {
+	X, Y float64
+}
+
+func main() {
+	// 假定：
+	var ai AbsInterface // declares method Abs()
+	var si SqrInterface
+	pp := new(Point) // say *Point implements Abs, Sqr
+	var empty interface{}
+
+	// 那么下面的语句和类型断言是合法的：
+	empty = pp                // everything satisfies empty
+	ai = empty.(AbsInterface) // underlying value pp implements Abs()
+	// (runtime failure otherwise)
+	si = ai.(SqrInterface) // *Point has Sqr() even though AbsInterface doesn’t
+	empty = si             // *Point implements empty set
+	// Note: statically checkable so type assertion not necessary.
+}
+
+func (p *Point) Abs()         {}
+func (p *Point) Sqr() float64 { return 1.0 }
+```
+
+下面是函数调用的一个例子：
+
+```go
+type myPrintInterface interface {
+    print()
+}
+func f3(x myInterface) {
+    x.(myPrintInterface).print() // type assertion to myPrintInterface
+}
+```
+
+下面是函数调用的一个例子：
+
+```go
+package main
+
+import "fmt"
+
+type myPrintInterface interface {
+	print()
+}
+
+type myInterface interface {
+	do()
+}
+
+type myType int
+
+// *myType 实现了接口 myPrintInterface 和接口 myInterface
+func (mt *myType) do() {}
+func (mt *myType) print() {
+	fmt.Printf("mt=%v", *mt)
+}
+
+func f3(x myInterface) {
+	x.(myPrintInterface).print() // type assertion to myPrintInterface
+}
+
+func main() {
+	var val myInterface
+	var p *myType
+	a := myType(666)
+	p = &a
+	val = p
+	f3(val)
+}
+// 输出结果
+// mt=666
+```
+
+`x` 转换为 `myPrintInterface` 类型是完全动态的：只要 `x` 的底层类型（动态类型）定义了 `print` 方法这个调用就可以正常运行（译注：若 `x` 的底层类型未定义 `print` 方法，此处类型断言会导致 `panic`，最佳实践应该为 `if mpi, ok := x.(myPrintInterface); ok { mpi.print() }`，参考 11.3 章节）。
+
+
+
+## 11.10 反射包
+
+### 11.10.1 方法和类型的反射
+
+在 10.4 节我们看到可以通过反射来分析一个结构体。本节我们进一步探讨强大的反射功能。反射是用程序检查其所拥有的结构，尤其是类型的一种能力；这是元编程的一种形式。反射可以在运行时检查类型和变量，例如它的大小、方法和 `动态` 的调用这些方法。这对于没有源代码的包尤其有用。这是一个强大的工具，**除非真得有必要，否则应当避免使用或小心使用**。
+
+变量的最基本信息就是类型和值：反射包的 `Type` 用来表示一个 Go 类型，反射包的 `Value` 为 Go 值提供了反射接口。
+
+两个简单的函数，`reflect.TypeOf` 和 `reflect.ValueOf`，返回被检查对象的类型和值。例如，x 被定义为：`var x float64 = 3.4`，那么 `reflect.TypeOf(x)` 返回 `float64`，`reflect.ValueOf(x)` 返回 `<float64 Value>`
+
+实际上，反射是通过检查一个接口的值，变量首先被转换成空接口。这从下面两个函数签名能够很明显的看出来：
+
+```go
+func TypeOf(i interface{}) Type
+func ValueOf(i interface{}) Value
+```
+
+接口的值包含一个 type 和 value。
+
+反射可以从接口值反射到对象，也可以从对象反射回接口值。
+
+reflect.Type 和 reflect.Value 都有许多方法用于检查和操作它们。一个重要的例子是 Value 有一个 Type 方法返回 reflect.Value 的 Type。另一个是 Type 和 Value 都有 Kind 方法返回一个常量来表示类型：Uint、Float64、Slice 等等。同样 Value 有叫做 Int 和 Float 的方法可以获取存储在内部的值（跟 int64 和 float64 一样）
+
+```go
+type Kind uint
+
+const (
+    Invalid Kind = iota
+    Bool
+    Int
+    Int8
+    Int16
+    Int32
+    Int64
+    Uint
+    Uint8
+    Uint16
+    Uint32
+    Uint64
+    Uintptr
+    Float32
+    Float64
+    Complex64
+    Complex128
+    Array
+    Chan
+    Func
+    Interface
+    Map
+    Ptr
+    Slice
+    String
+    Struct
+    UnsafePointer
+)
+```
+
+对于 float64 类型的变量 x，如果 `v:=reflect.ValueOf(x)`，那么 `v.Kind()` 返回 `reflect.Float64` ，所以下面的表达式是 `true` `v.Kind() == reflect.Float64`
+
+Kind 总是返回底层类型：
+
+```go
+package main
+
+import (
+	"fmt"
+	"reflect"
+)
+
+type myInterface interface {
+	play()
+}
+
+type MyInt int
+
+func (mi MyInt) play() {
+	fmt.Printf("mi=%v\n", mi)
+}
+
+func main() {
+	var m MyInt = 5
+	v := reflect.ValueOf(m)
+	fmt.Printf("Type of v.Kind() is %T\n", v.Kind())
+	fmt.Println(v.Kind() == reflect.Int)  // true
+
+	fmt.Println(v.Interface()) // v.Interface() 返回接口变量
+
+	x, ok := v.Interface().(myInterface)
+	x.play()
+	fmt.Printf("ok=%v\n", ok)
+}
+// 输出结果
+// Type of v.Kind() is reflect.Kind
+// true
+// 5
+// mi=5
+// ok=true
+```
+
+方法 `v.Kind()` 返回 `reflect.Int`。
+
+变量 v 的 `Interface()` 方法可以得到还原（接口）值，所以可以这样打印 v 的值：`fmt.Println(v.Interface())`
+
+尝试运行下面的代码：
+
+示例 11.11 reflect1.go：
+
+```go
+// blog: Laws of Reflection
+package main
+
+import (
+    "fmt"
+    "reflect"
+)
+
+func main() {
+    var x float64 = 3.4
+    fmt.Println("type:", reflect.TypeOf(x))
+    v := reflect.ValueOf(x)
+    fmt.Println("value:", v)
+    fmt.Println("type:", v.Type())
+    fmt.Println("kind:", v.Kind())
+    fmt.Println("value:", v.Float())
+    fmt.Println(v.Interface())
+    // %5.2e 其中的 5表示输出的格式字符最少占的位数，位数不足5时左边补空格
+    fmt.Printf("value is %5.2e\n", v.Interface())
+    y := v.Interface().(float64)
+    fmt.Println(y)
+}
+// 输出结果
+// type: float64
+// value: 3.4
+// type: float64
+// kind: float64
+// value: 3.4
+// 3.4
+// value is 3.40e+00
+// 3.4
+```
+
+x 是一个 float64 类型的值，`reflect.ValueOf(x).Float()` 返回这个 float64 类型的实际值；同样的适用于 `Int(), Bool(), Complex(), String()`
+
+
+
+### 11.10.2 通过反射修改(设置)值
+
+继续前面的例子，假设我们要把 x 的值改为 3.1415。Value 有一些方法可以完成这个任务，但是必须小心使用：`v.SetFloat(3.1415)`。
+
+这将产生一个错误：`reflect.Value.SetFloat using unaddressable value`。
+
+为什么会这样呢？问题的原因是 v 不是可设置的（这里并不是说值不可寻址）。是否可设置是 Value 的一个属性，并且不是所有的反射值都有这个属性：可以使用 `CanSet()` 方法测试是否可设置。
+
+在例子中我们看到 `v.CanSet()` 返回 false： `settability of v: false`
+
+当 `v := reflect.ValueOf(x)` 函数通过传递一个 x 拷贝创建了 v，那么 v 的改变并不能更改原始的 x。要想 v 的更改能作用到 x，那就**必须传递 x 的地址** `v = reflect.ValueOf(&x)`。
+
+通过 Type() 我们看到 v 现在的类型是 `*float64` 并且仍然是不可设置的。
+
+要想让其可设置我们需要使用 `Elem()` 函数，这间接的使用指针：`v = v.Elem()`
+
+现在 `v.CanSet()` 返回 true 并且 `v.SetFloat(3.1415)` 设置成功了！
+
+示例 11.12 reflect2.go：
+
+```go
+package main
+
+import (
+	"fmt"
+	"reflect"
+)
+
+func main() {
+	var x float64 = 3.4
+	v := reflect.ValueOf(x)
+	fmt.Printf("The type of v is: %T\n", v)
+	// setting a value:
+	// v.SetFloat(3.1415) // Error: will panic: reflect.Value.SetFloat using unaddressable value
+	fmt.Println("settability of v:", v.CanSet())
+	v = reflect.ValueOf(&x) // Note: take the address of x.
+	fmt.Println("type of v:", v.Type())
+	fmt.Println("settability of v:", v.CanSet())
+	v = v.Elem()
+	fmt.Println("The Elem of v is: ", v)
+	fmt.Println("settability of v:", v.CanSet())
+	v.SetFloat(3.1415) // this works!
+	fmt.Println(v.Interface())
+	fmt.Println(v)
+	fmt.Println(x)
+}
+// 输出结果
+// The type of v is: reflect.Value
+// settability of v: false
+// type of v: *float64
+// settability of v: false
+// The Elem of v is:  3.4
+// settability of v: true
+// 3.1415
+// 3.1415
+// 3.1415
+```
+
+**反射中有些内容是需要用地址去改变它的状态的。**
+
+
+
+### 11.10.3 反射结构
+
+有些时候需要反射一个结构类型。`NumField()` 方法返回结构内的字段数量；通过一个 for 循环用索引取得每个字段的值 `Field(i)`。
+
+我们同样能够调用签名在结构上的方法，例如，使用索引 n 来调用：`Method(n).Call(nil)`。
+
+示例 11.13 reflect_struct.go：
+
+```go
+package main
+
+import (
+	"fmt"
+	"reflect"
+	"strconv"
+)
+
+type NotknownType struct {
+	s1, s2, s3 string
+}
+
+func (n NotknownType) String() string {
+	return n.s1 + " - " + n.s2 + " - " + n.s3
+}
+
+func (n NotknownType) X(i int) string {
+	fmt.Printf("i=%v\n", i)
+	return strconv.Itoa(i)
+}
+
+// variable to investigate:
+var secret interface{} = NotknownType{"Ada", "Go", "Oberon"}
+
+func main() {
+	value := reflect.ValueOf(secret) // <main.NotknownType Value>
+	typ := reflect.TypeOf(secret)    // main.NotknownType
+	// alternative:
+	// typ := value.Type()  // main.NotknownType
+	fmt.Println(typ)
+	knd := value.Kind() // struct
+	fmt.Println(knd)
+
+	// iterate through the fields of the struct:
+	for i := 0; i < value.NumField(); i++ {
+		fmt.Printf("Field %d: %v\n", i, value.Field(i))
+		// error: panic: reflect.Value.SetString using value obtained using unexported field
+		// value.Field(i).SetString("C#")
+	}
+
+	// call the first method, which is String():
+	results := value.Method(0).Call(nil)
+	fmt.Println(results) // [Ada - Go - Oberon]
+	// - - -
+
+	// 调用第二个函数
+	params := make([]reflect.Value, 1)
+	params[0] = reflect.ValueOf(123)
+	results1 := value.Method(1).Call(params)
+	fmt.Printf("%T\n", results1[0])
+	var x string
+	x = results1[0].String()
+	fmt.Printf("x=%v\n", x)
+}
+// 输出结果
+// main.NotknownType
+// struct
+// Field 0: Ada
+// Field 1: Go
+// Field 2: Oberon
+// [Ada - Go - Oberon]
+// i=123
+// reflect.Value
+// x=123
+```
+
+但是如果尝试更改一个值，会得到一个错误：
+
+```go
+panic: reflect.Value.SetString using value obtained using unexported field
+```
+
+**这是因为结构中只有被导出字段（首字母大写）才是可设置的**；来看下面的例子：
+
+示例 11.14 reflect_struct2.go：
+
+```go
+package main
+
+import (
+	"fmt"
+	"reflect"
+)
+
+type T struct {
+	A int
+	B string
+}
+
+func main() {
+	t := T{23, "skidoo"}
+	s := reflect.ValueOf(&t).Elem() // 注意这里用的是指针(&t)
+	typeOfT := s.Type()
+	for i := 0; i < s.NumField(); i++ {
+		f := s.Field(i)
+		fmt.Printf("%d: %s %s = %v\n", i,
+			typeOfT.Field(i).Name, f.Type(), f.Interface())
+	}
+	s.Field(0).SetInt(77)
+	s.Field(1).SetString("Sunset Strip")
+	fmt.Println("t is now", t)
+}
+// 输出结果
+// 0: A int = 23
+// 1: B string = skidoo
+// t is now {77 Sunset Strip}
+```
+
+
+
+## 11.11 Printf 和反射
+
+在 Go 语言的标准库中，前几节所述的反射的功能被大量地使用。举个例子，fmt 包中的 Printf（以及其他格式化输出函数）都会使用反射来分析它的 `...` 参数。
+
+Printf 的函数声明为：
+
+```go
+func Printf(format string, a ...interface{}) (n int, err error)
+```
+
+Printf 中的 `...` 参数为空接口类型。Printf 使用反射包来解析这个参数列表。所以，Printf 能够知道它每个参数的类型。因此格式化字符串中只有%d而没有 %u 和 %ld，因为它知道这个参数是 unsigned 还是 long。这也是为什么 Print 和 Println 在没有格式字符串的情况下还能如此漂亮地输出。
+
+为了让大家更加具体地了解 Printf 中的反射，我们实现了一个简单的通用输出函数。其中使用了 type-switch 来推导参数类型，并根据类型来输出每个参数的值（这里用了 10.7 节中练习 10.13 的部分代码）
+
+```go
+package main
+
+import (
+	"fmt"
+	"os"
+	"strconv"
+)
+
+type Stringer interface {
+	String() string
+}
+
+type Celsius float64
+
+func (c Celsius) String() string {
+	return strconv.FormatFloat(float64(c), 'f', 1, 64) + " °C"
+}
+
+type Day int
+
+var dayName = []string{"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
+
+func (day Day) String() string {
+	return dayName[day]
+}
+
+func myPrint(args ...interface{}) {
+	for i, arg := range args {
+		if i > 0 {
+			os.Stdout.WriteString(" ")
+		}
+		switch a := arg.(type) { // type switch
+		case Stringer:
+			os.Stdout.WriteString(a.String())
+		case int:
+			os.Stdout.WriteString(strconv.Itoa(a))
+		case string:
+			os.Stdout.WriteString(a)
+		// more types
+		default:
+			os.Stdout.WriteString("???")
+		}
+	}
+}
+
+func main() {
+	myPrint(Day(1), "was", Celsius(18.36)) // Tuesday was 18.4 °C
+
+	// 测试接口断言返回的值的类型
+	fmt.Println()
+	var x interface{}
+	x = 1
+	v, ok := x.(int)
+	fmt.Printf("v=%v, type of v is %T, ok=%v\n", v, v, ok)
+}
+// 输出结果
+// Tuesday was 18.4 °C
+// v=1, type of v is int, ok=true
+```
+
+在 12.8 节中我们将阐释 `fmt.Fprintf()` 是怎么运用同样的反射原则的。
+
+
+
+## 11.12 接口与动态类型
+
+### 11.12.1 Go 的动态类型
+
+在经典的面向对象语言（像 C++，Java 和 C#）中数据和方法被封装为 `类` 的概念：类包含它们两者，并且不能剥离。
+
+Go 没有类：数据（结构体或更一般的类型）和方法是一种松耦合的正交关系。
+
+Go 中的接口跟 Java/C# 类似：都是必须提供一个指定方法集的实现。但是更加灵活通用：**任何提供了接口方法实现代码的类型都隐式地实现了该接口，而不用显式地声明**。
+
+和其它语言相比，Go 是唯一结合了接口值，静态类型检查（是否该类型实现了某个接口），运行时动态转换的语言，并且不需要显式地声明类型是否满足某个接口。该特性允许我们在不改变已有的代码的情况下定义和使用新接口。
+
+接收一个（或多个）接口类型作为参数的函数，其**实参**可以是任何实现了该接口的类型的变量。 `实现了某个接口的类型可以被传给任何以此接口为参数的函数` 。
+
+类似于 Python 和 Ruby 这类动态语言中的 `动态类型（duck typing）`；这意味着对象可以根据提供的方法被处理（例如，作为参数传递给函数），而忽略它们的实际类型：它们能做什么比它们是什么更重要。
+
+这在程序 duck_dance.go 中得以阐明，函数 DuckDance 接受一个 IDuck 接口类型变量。仅当 DuckDance 被实现了 IDuck 接口的类型调用时程序才能编译通过。
+
+示例 11.16 duck_dance.go：
+
+```go
+package main
+
+import "fmt"
+
+type IDuck interface {
+	Quack()
+	Walk()
+}
+
+func DuckDance(duck IDuck) {
+	for i := 1; i <= 3; i++ {
+		duck.Quack()
+		duck.Walk()
+	}
+}
+
+type Bird struct {
+	// ...
+}
+
+func (b *Bird) Quack() {
+	fmt.Println("I am quacking!")
+}
+
+func (b *Bird) Walk() {
+	fmt.Println("I am walking!")
+}
+
+func main() {
+	b := new(Bird)
+	DuckDance(b)
+}
+// 输出结果
+// I am quacking!
+// I am walking!
+// I am quacking!
+// I am walking!
+// I am quacking!
+// I am walking!
+```
+
+如果 `Bird` 没有实现 `Walk()`（把它注释掉），会得到一个编译错误：
+
+```go
+cannot use b (type *Bird) as type IDuck in argument to DuckDance:
+*Bird does not implement IDuck (missing Walk method)
+```
+
+
+
+### 11.12.2 动态方法调用
+
+像 Python，Ruby 这类语言，动态类型是延迟绑定的（在运行时进行）：方法只是用参数和变量简单地调用，然后在运行时才解析（它们很可能有像 `responds_to` 这样的方法来检查对象是否可以响应某个方法，但是这也意味着更大的编码量和更多的测试工作）
+
+Go 的实现与此相反，通常需要编译器静态检查的支持：当变量被赋值给一个接口类型的变量时，编译器会检查其是否实现了该接口的所有函数。如果方法调用作用于像 `interface{}` 这样的“泛型”上，你可以通过类型断言（参见 11.3 节）来检查变量是否实现了相应接口。
+
+Go 的接口提高了代码的分离度，改善了代码的复用性，使得代码开发过程中的设计模式更容易实现。用 Go 接口还能实现 `依赖注入模式`。
+
+
+
+### 11.12.3 接口的提取
+
+`提取接口` 是非常有用的设计模式，可以减少需要的类型和方法数量，而且不需要像传统的基于类的面向对象语言那样维护整个的类层次结构。
+
+Go 接口可以让开发者找出自己写的程序中的类型。假设有一些拥有共同行为的对象，并且开发者想要抽象出这些行为，这时就可以创建一个接口来使用。 我们来扩展 11.1 节的示例 11.2 interfaces_poly.go，假设我们需要一个新的接口 `TopologicalGenus`，用来给 shape 排序（这里简单地实现为返回 int）。我们需要做的是给想要满足接口的类型实现 `Rank()` 方法：
+
+示例 11.17 multi_interfaces_poly.go：
+
+```go
+// multi_interfaces_poly.go
+package main
+
+import "fmt"
+
+type Shaper interface {
+	Area() float32
+}
+
+type TopologicalGenus interface {
+	Rank() int
+}
+
+type Square struct {
+	side float32
+}
+
+func (sq *Square) Area() float32 {
+	return sq.side * sq.side
+}
+
+func (sq *Square) Rank() int {
+	return 1
+}
+
+type Rectangle struct {
+	length, width float32
+}
+
+func (r Rectangle) Area() float32 {
+	return r.length * r.width
+}
+
+func (r Rectangle) Rank() int {
+	return 2
+}
+
+func main() {
+	r := Rectangle{5, 3} // Area() of Rectangle needs a value
+	q := &Square{5}      // Area() of Square needs a pointer
+	shapes := []Shaper{r, q}
+	fmt.Println("Looping through shapes for area ...")
+	for n, _ := range shapes {
+		fmt.Println("Shape details: ", shapes[n])
+		fmt.Println("Area of this shape is: ", shapes[n].Area())
+	}
+	topgen := []TopologicalGenus{r, q}
+	fmt.Println("Looping through topgen for rank ...")
+	for n, _ := range topgen {
+		fmt.Println("Shape details: ", topgen[n])
+		fmt.Println("Topological Genus of this shape is: ", topgen[n].Rank())
+	}
+}
+
+// 输出结果
+// Looping through shapes for area ...
+// Shape details:  {5 3}
+// Area of this shape is:  15
+// Shape details:  &{5}
+// Area of this shape is:  25
+// Looping through topgen for rank ...
+// Shape details:  {5 3}
+// Topological Genus of this shape is:  2
+// Shape details:  &{5}
+// Topological Genus of this shape is:  1
+```
+
+所以你不用提前设计出所有的接口；`整个设计可以持续演进，而不用废弃之前的决定`。类型要实现某个接口，它本身不用改变，你只需要在这个类型上实现新的方法。
+
+
+
+### 11.12.4 显式地指明类型实现了某个接口
+
+如果你希望满足某个接口的类型显式地声明它们实现了这个接口，你可以向接口的方法集中添加一个具有描述性名字的方法。例如：
+
+```go
+type Fooer interface {
+    Foo()
+    ImplementsFooer()
+}
+```
+
+类型 Bar 必须实现 `ImplementsFooer` 方法来满足 `Fooer` 接口，以清楚地记录这个事实。
+
+```go
+type Bar struct{}
+func (b Bar) ImplementsFooer() {}
+func (b Bar) Foo() {}
+```
+
+大部分代码并不使用这样的约束，因为它限制了接口的实用性。
+
+但是有些时候，这样的约束在大量相似的接口中被用来解决歧义。
+
+
+
+### 11.12.5 空接口和函数重载
+
+在 6.1 节中, 我们看到函数重载是不被允许的。在 Go 语言中函数重载可以用可变参数 `...T` 作为函数最后一个参数来实现（参见 6.3 节）。如果我们把 T 换为空接口，那么可以知道任何类型的变量都是满足 T (空接口）类型的，这样就允许我们传递任何数量任何类型的参数给函数，即重载的实际含义。
+
+函数 `fmt.Printf` 就是这样做的：
+
+```go
+fmt.Printf(format string, a ...interface{}) (n int, errno error)
+```
+
+这个函数通过枚举 `slice` 类型的实参动态确定所有参数的类型。并查看每个类型是否实现了 `String()` 方法，如果是就用于产生输出信息。我们可以回到 11.10 节查看这些细节。
+
+
+
+### 11.12.6 接口的继承
+
+当一个类型包含（内嵌）另一个类型（实现了一个或多个接口）的指针时，这个类型就可以使用（另一个类型）所有的接口方法。
+
+例如：
+
+```go
+type Task struct {
+    Command string
+    *log.Logger
+}
+```
+
+这个类型的工厂方法像这样：
+
+```go
+func NewTask(command string, logger *log.Logger) *Task {
+    return &Task{command, logger}
+}
+```
+
+当 `log.Logger` 实现了 `Log()` 方法后，Task 的实例 task 就可以调用该方法：
+
+```go
+task.Log()
+```
+
+类型可以通过继承多个接口来提供像 `多重继承` 一样的特性：
+
+```go
+type ReaderWriter struct {
+    io.Reader
+    io.Writer
+}
+```
+
+上面概述的原理被应用于整个 Go 包，多态用得越多，代码就相对越少（参见 12.8 节）。这被认为是 Go 编程中的 **重要的最佳实践**。
+
+有用的接口可以在开发的过程中被归纳出来。添加新接口非常容易，因为已有的类型不用变动（仅仅需要实现新接口的方法）。已有的函数可以扩展为使用接口类型的约束性参数：通常只有函数签名需要改变。对比基于类的 OO 类型的语言在这种情况下则需要适应整个类层次结构的变化。
+
