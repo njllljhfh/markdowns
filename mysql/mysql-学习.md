@@ -176,6 +176,8 @@ ORDER BY Persons.LastName;
 
 INNER JOIN 关键字在表中存在至少一个匹配时返回行。如果 "Persons" 中的一些行在 "Orders" 中没有匹配，就不会列出这些行。
 
+**注释：**INNER JOIN 与 JOIN 是相同的。
+
 
 
 ### 3、LEFT JOIN（左连接）

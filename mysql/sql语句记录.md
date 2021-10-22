@@ -20,10 +20,6 @@
 
 
 
----
-
-
-
 ### 取消分组字段要在select中的限制
 
 ```sql
@@ -32,5 +28,9 @@ SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));
 
 
 
----
+### 通过SET语句临时更改GROUP_CONCAT的默认长度
+
+```sql
+SET group_concat_max_len = 4294967295;
+```
 
