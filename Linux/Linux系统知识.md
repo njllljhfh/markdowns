@@ -454,7 +454,7 @@ nohup python3 -u image_collector_atesi.py -s /APP/testimg/ -o ./image_collector_
 
 
 
-## ubuntu18.04查看端口占用
+## Ubuntu18.04 查看端口占用
 
 ```shell
 sudo netstat -anp |grep 3306
@@ -462,9 +462,48 @@ sudo netstat -anp |grep 3306
 
 
 
-根据名称查看进程号，并kill
+## 根据名称查看进程号，并 kill
 
 ```shell
 ps -ef | grep uwsgi | grep -v grep | awk '{print $2}' | xargs kill -9
 ```
+
+
+
+---
+
+## Anaconda
+
+### Ubuntu18.04 安装 Anaconda
+
+[Anaconda安装包下载地址](https://repo.anaconda.com/archive)
+
+```shell
+# 下载命令
+wget https://repo.anaconda.com/archive/Anaconda3-5.3.1-Linux-x86_64.sh
+
+# bash 命令安装：
+cd /home/njl/Downloads # cd 到你下载的Anaconda目录
+sudo bash Anaconda3-XXX.sh # bash 对安装包进行安装
+
+# 安装完成后执行如下命令，使得anaconda的配置生效
+source ~/.bashrc
+
+#安装完成测试：
+可以使用命令anaconda -V 或者 conda --version 查看conda版本，同时也可验证是否安装完成。
+
+#注: 在第二步的安装过程中会问你是否接受授权，输入yes，会让你选择安装目录，最好用默认的。如果直接回车或者选择输入no，安装完成后输入anaconda -V 会提示找不到命令，因为你还需将安装目录导入系统环境中，可以使用以下命令：
+export PATH=/path/install/anaconda3/bin:$PATH  # 把anaconda安装的bin目录写入配置文件
+```
+
+
+
+### Anaconda安装虚拟python3的虚拟环境
+
+
+
+
+
+
+---
 
