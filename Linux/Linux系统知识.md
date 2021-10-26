@@ -498,9 +498,21 @@ export PATH=/path/install/anaconda3/bin:$PATH  # 把anaconda安装的bin目录�
 
 
 
-### Anaconda安装虚拟python3的虚拟环境
+### Anaconda安装虚拟python的虚拟环境
 
+```shell
+#创建虚拟环境
+conda create -n your_env_name python=x.x
 
+# 删除虚拟环境
+conda remove -n your_env_name --all
+
+# 切换conda环境
+conda activate env_name
+ 
+# 退出conda环境
+conda deactivate
+```
 
 
 
