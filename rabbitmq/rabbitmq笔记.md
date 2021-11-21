@@ -80,7 +80,7 @@ ip:15672
 
 # 用vim打开 /etc/hosts
 sudo vim /etc/hosts
-# 添加以下内容，保存并退出
+# 添加以下内容，保存并退出(ip换成自己节点的ip)
 192.168.88.1 node1
 192.168.88.2 node2
 192.168.88.3 node3
@@ -472,8 +472,8 @@ random.shuffle(all_endpoints)
 
 is_disconnected = True
 
+print("生产者: 首次连接...")
 while is_disconnected:
-    print("生产者: 重新连接...")
     for url in all_endpoints:
         try:
             connection = pika.BlockingConnection(url)
@@ -493,12 +493,14 @@ while is_disconnected:
                 message = f'info: Hello World!-{datetime.now()}'
                 channel.basic_publish(exchange='logs', routing_key='', body=message)
                 print(f" [x] Sent {message}")
-                time.sleep(1)
+                time.sleep(1.5)
         except Exception as e:
             connection.close()
             is_disconnected = True
             print(f'生产过程中报错：{e}')
             break
+
+    print("生产者: 重新连接...")
 
 ```
 
@@ -529,8 +531,8 @@ def callback(ch, method, properties, body):
 
 is_disconnected = True
 
+print("消费者: 首次连接...")
 while is_disconnected:
-    print("消费者: 重新连接...")
     for url in all_endpoints:
         try:
             connection = pika.BlockingConnection(url)
@@ -562,6 +564,8 @@ while is_disconnected:
             is_disconnected = True
             print(f'消费过程中报错：{e}')
             break
+
+    print("消费者: 重新连接...")
 
 ```
 
