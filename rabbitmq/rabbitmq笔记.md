@@ -93,6 +93,8 @@ sudo vim /etc/hosts
 ```
 RabbitMQ节点和CLI工具（例如rabbitmqctl）使用cookie来确定它们是否被允许相互通信，要使两个节点能够通信，它们必须具有相同的共享密钥，称为Erlang Cookie.
 Cookie只是一个字符串，最多可以有255个字符。它通常存储在本地文件中。该文件必须只能由所有者访问（400权限）。每个集群节点必须具有相同的 cookie，文件位置/var/lib/rabbitmq/.erlang.cookie， 把rabbit2、rabbit3设置成和rabbit2一样的即可，权限是400
+
+修改后重启rabbitmq
 ```
 
 
