@@ -512,6 +512,9 @@ conda activate env_name
  
 # 退出conda环境
 conda deactivate
+
+# 查看已安装的环境
+conda info --envs
 ```
 
 
