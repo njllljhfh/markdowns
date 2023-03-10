@@ -299,7 +299,7 @@ source ~/.bashrc
 
 
 
-#### 
+#### 安装lsof
 
 ```
 # 安装lsof
@@ -382,7 +382,7 @@ docker exec django_uwsgi /projects/MS_ADC/start_uwsgi.sh
 cd /home/mc5k/projects/adc5000/v50006000/MS_ADC
 vim auto_start_uwsgi_celery.sh
 
-# 脚背内容如下
+# 脚本内容如下
 #!/bin/bash
 export SERVER_PORT=8000
 export ADC_ENV=production
@@ -419,7 +419,38 @@ echo "----------------------------"
 
 
 
-### 3.7、上传 dockerhub
+### 3.7、重启celery的脚本
+
+start_celery.sh
+
+```shell
+# 租宿主机
+cd /home/mc5k/projects/adc5000/v50006000/MS_ADC
+vim start_celery.sh
+
+# 脚本内容如下
+#!/bin/bash
+export ADC_ENV=production
+export LC_ALL=en_US.UTF-8
+
+cd /projects/MS_ADC
+
+celery_pids=$(ps -aux |grep celery | grep local | awk '{print $2}' | grep -v "PID" |tr -s '\n' ' ')
+echo "celery_pids=$celery_pids"
+
+if [[ ${celery_pids} ]]; then
+  echo "stop all celery-worker"
+  kill -9 ${celery_pids}
+fi
+
+nohup celery -A config.Celery worker -l info -n local6000_0 -c 1 -P threads -Q infer_task_v5000_6000 > /var/log/celery/celery_infer.log 2>&1 &
+echo "start celery-worker-infer successfully"
+echo "----------------------------"
+```
+
+
+
+### 3.8、上传 dockerhub
 
 ```shell
 #将本地镜像 nginx:my_nginx 打tag 
@@ -749,7 +780,7 @@ docker run -d -p 3306:3306 --name mysqldb -v /mydocker/mysql/logs:/var/log/mysql
 
 ```shell
 # 启动容器
-docker run -itd --name redis_mq_minio -p 9379:6379 -p 9900:9000 -p 60006:60006 -p 5672:5672 -p 15672:15672 -v /mydocker/minio/data:/data/minio -v /mydocker/minio/logs:/var/log/minio njllljhfh/componet_server:redis_mq_minio
+docker run -itd --name redis_mq_minio -p 9379:6379 -p 9900:9000 -p 60006:60006 -p 5672:5672 -p 45672:15672 -v /mydocker/minio/data:/data/minio -v /mydocker/minio/logs:/var/log/minio njllljhfh/componet_server:redis_mq_minio
 
 # 进入 redis_mq_minio 容器
 docker exec -it redis_mq_minio /bin/bash
@@ -843,10 +874,39 @@ docker exec -it nginx_server /bin/bash
 # 进入 django_uwsgi 容器
 docker exec -it django_uwsgi /bin/bash
 
-# 在宿主机，重启 django_uwsgi 容器中的 uwsgi服务。（/projects/MS_ADC/start_uwsgi.sh 是容器内的路径）
+# 在宿主机，重启 django_uwsgi 容器中的 uwsgi服务（/projects/MS_ADC/start_uwsgi.sh 是容器内的路径）
 docker exec django_uwsgi /projects/MS_ADC/start_uwsgi.sh
+
+# 在宿主机，重启 django_uwsgi 容器中的 celery（/projects/MS_ADC/start_celery.sh 是容器内的路径）
+docker exec django_uwsgi /projects/MS_ADC/start_celery.sh
 
 # 进入nginx容器，重新加载nginx
 nginx -s reload
+```
+
+
+
+
+
+## 备用
+
+### rabbitmq
+
+/etc/rabbitmq/rabbitmq.config，修改port
+
+```shell
+[
+{
+  rabbit,
+  [{
+    tcp_listeners,[{"0.0.0.0",5672}]
+  }]
+},
+{
+  rabbitmq_management,
+  [{
+     listener,[{port,45672},{ip,"0.0.0.0"},{ssl,false}]
+  }]
+}].
 ```
 
