@@ -353,14 +353,14 @@ cd /projects/MS_ADC
 pids=$(lsof -i:$SERVER_PORT | awk '{print $2}' | grep -v "PID" |tr -s '\n' ' ')
 echo "pids=$pids"
 if [[ ! ${pids} ]]; then
- echo "runserver is not running, begin to start it."
+ echo "uwsgi-server is not running, begin to start it."
 else
  kill -9 ${pids}
 fi
 sleep 1s
 
 uwsgi --ini uwsgi.ini
-echo "started server successfully"
+echo "started uwsgi-server successfully"
 
 ```
 
@@ -419,7 +419,7 @@ echo "----------------------------"
 
 
 
-### 3.7、重启celery的脚本
+### 3.7、重启 celery 的脚本
 
 start_celery.sh
 
@@ -780,7 +780,7 @@ docker run -d -p 3306:3306 --name mysqldb -v /mydocker/mysql/logs:/var/log/mysql
 
 ```shell
 # 启动容器
-docker run -itd --name redis_mq_minio -p 9379:6379 -p 9900:9000 -p 60006:60006 -p 5672:5672 -p 45672:15672 -v /mydocker/minio/data:/data/minio -v /mydocker/minio/logs:/var/log/minio njllljhfh/componet_server:redis_mq_minio
+docker run -itd --name redis_mq_minio -p 9379:6379 -p 9900:9000 -p 60006:60006 -p 6672:5672 -p 45672:15672 -v /mydocker/minio/data:/data/minio -v /mydocker/minio/logs:/var/log/minio njllljhfh/componet_server:redis_mq_minio
 
 # 进入 redis_mq_minio 容器
 docker exec -it redis_mq_minio /bin/bash
@@ -826,8 +826,27 @@ nginx -s reload
 ### 5、启动 django_uwsgi 容器
 
 ```shell
-# 修改宿主机项目目录中 production.py 文件中的 HOST_IP="宿主机ip"
+# 将前端静态文件拷贝到宿主机目录
+/home/mc5k/projects/adc5000/v50006000/html
+
+# 拉取项目
+cd /home/mc5k/projects/adc5000/v50006000/
+git clone git@192.168.10.30:dev/MS_ADC.git
+cd MS_ADC
+git checkout dev_1.1.9_6000
+chmod 777 auto_start_uwsgi_celery.sh start_celery.sh start_uwsgi.sh
+cp uwsgi.ini_docker uwsgi.ini
+cd /home/mc5k/projects/adc5000/v50006000/MS_ADC/config/settings
+cp production_docker.py production.py
+
+
+# 修改宿主机项目目录中 production.py 文件
 vim /home/mc5k/projects/adc5000/v50006000/MS_ADC/config/settings/production.py
+# 修改ip
+HOST_IP="宿主机ip"
+# 修改rabbitmq端口
+BROKER_URL = f"amqp://admin:admin@{HOST_IP}:6672/adcvhost"
+
 
 # 启动容器
 docker run -itd --name django_uwsgi -p 7056:8000 -v /home/mc5k/projects/adc5000/v50006000/MS_ADC:/projects/MS_ADC -v /mydocker/uwsgi/logs:/var/log/uwsgi -v /mydocker/celery/logs:/var/log/celery njllljhfh/adc_server:django_py3.8_uwsgi
@@ -840,6 +859,10 @@ docker run -itd --name django_uwsgi -p 7056:8000 -v /home/mc5k/projects/adc5000/
 ```shell
 # 用 谷歌浏览器 访问 adc服务器 ip:7156
 例如访问 10.0.2.20:7156
+
+
+# 如有报错，解决问题
+# 然后重启 celery，重启 uwsgi
 ```
 
 
