@@ -876,7 +876,7 @@ docker run -itd --name django_uwsgi -p 7056:8000 -v /home/mc5k/projects/adc5000/
 
 
 
-## 二、重启 uwsgi 用的脚本 start_uwsgi.sh 
+## 二、重启 uwsgi 服务用的脚本
 
 ```shell
 # 如果修改了adc后端服务的配置，用以下命令重启uwsgi服务
