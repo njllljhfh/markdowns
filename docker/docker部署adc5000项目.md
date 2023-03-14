@@ -744,6 +744,10 @@ docker push njllljhfh/componet_server:redis_mq_minio
 
 ## 一、部署过程
 
+开始部署前，在宿主机创建用户名为 mc5k 的用户，并用 mc5k 用户登录。如果不创建 mc5k 用户，那么请自行根据需求修改相关配置。
+
+
+
 ### 1、从 dockerhub 拉取镜像
 
 ```shell
@@ -826,6 +830,9 @@ nginx -s reload
 ### 5、启动 django_uwsgi 容器
 
 ```shell
+# 创建项目目录
+mkdir -p /home/mc5k/projects/adc5000/v50006000
+
 # 将前端静态文件拷贝到宿主机目录
 /home/mc5k/projects/adc5000/v50006000/html
 
