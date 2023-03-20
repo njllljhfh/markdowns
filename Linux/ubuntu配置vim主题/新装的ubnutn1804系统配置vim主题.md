@@ -6,8 +6,6 @@
 
 [wombat256.vim文件下载地址](https://www.vim.org/scripts/script.php?script_id=2465)
 
-当前目录中已经下载好 wombat256.vim 文件，可直接使用（在文件管理器中可以看到该主题文件）
-
 
 
 
