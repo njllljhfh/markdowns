@@ -128,5 +128,128 @@ map2 := make(map[string]float32, 100)
 
 
 
+一个类型加上它的方法等价于面向对象中的一个类。一个重要的区别是：在 Go 中，类型的代码和绑定在它上面的方法的代码可以不放置在一起，它们可以存在在不同的源文件，唯一的要求是：它们必须是同一个包的。
+
+
+
+别名类型没有原始类型上已经定义过的方法。
+
+
+
+类型和作用在它上面定义的方法必须在同一个包里定义，这就是为什么不能在 int、float 或类似这些的类型上定义方法。试图在 int 类型上定义方法会得到一个编译错误：
+
+```go
+cannot define new methods on non-local type int
+```
+
+
+
+如果方法不需要使用 `recv` 的值，可以用 **_** 替换它，比如：
+
+```
+ 复制代码func (_ receiver_type) methodName(parameter_list) (return_value_list) { ... }
+```
+
+
+
+在 Go 中，（接收者）类型关联的方法不写在类型结构里面，就像类那样；耦合更加宽松；类型和方法之间的关联由接收者来建立。
+
+
+
+鉴于性能的原因，`recv` 最常见的是一个指向 receiver_type 的指针（因为我们不想要一个实例的拷贝，如果按值调用的话就会是这样），特别是在 receiver 类型是结构体时，就更是如此了。
+
+
+
+在值和指针上调用方法：
+
+- 可以有连接到类型的方法，也可以有连接到类型指针的方法。
+
+- 但是这没关系：对于类型 T，如果在 *T 上存在方法 `Meth()`，并且 `t` 是这个类型的变量，那么 `t.Meth()` 会被自动转换为 `(&t).Meth()`。
+- **指针方法和值方法都可以在指针或非指针上被调用**
+
+
+
+
+
+不要在 `String()` 方法里面调用涉及 `String()` 方法的方法，它会导致意料之外的错误，比如下面的例子，它导致了一个无限递归调用（`TT.String()` 调用 `fmt.Sprintf`，而 `fmt.Sprintf` 又会反过来调用 `TT.String()`…），很快就会导致内存溢出：
+
+```go
+type TT float64
+func (t TT) String() string {
+    return fmt.Sprintf("%v", t)
+}
+t.String()
+```
+
+
+
+
+
+当函数的参数是接口类型时：
+
+- 指针方法可以通过指针调用
+- 值方法可以通过值调用
+- 接收者是值的方法可以通过指针调用，因为指针会首先被解引用
+- 接收者是指针的方法不可以通过值调用，因为存储在接口中的值没有地址
+
+```go
+package main
+
+import (
+    "fmt"
+)
+
+type List []int
+
+func (l List) Len() int {
+    return len(l)
+}
+
+func (l *List) Append(val int) {
+    *l = append(*l, val)
+}
+
+type Appender interface {
+    Append(int)
+}
+
+func CountInto(a Appender, start, end int) {
+    for i := start; i <= end; i++ {
+        a.Append(i)
+    }
+}
+
+type Lener interface {
+    Len() int
+}
+
+func LongEnough(l Lener) bool {
+    return l.Len()*10 > 42
+}
+
+func main() {
+    // A bare value
+    var lst List
+    // compiler error:
+    // cannot use lst (type List) as type Appender in argument to CountInto:
+    //       List does not implement Appender (Append method has pointer receiver)
+    // CountInto(lst, 1, 10)
+    if LongEnough(lst) { // VALID:Identical receiver type
+        fmt.Printf("- lst is long enough\n")
+    }
+    // A pointer value
+    plst := new(List)
+    CountInto(plst, 1, 10) //VALID:Identical receiver type
+    if LongEnough(plst) {
+        // VALID: a *List can be dereferenced for the receiver
+        fmt.Printf("- plst is long enough\n")
+    }
+}
+```
+
+
+
+
+
 
 
