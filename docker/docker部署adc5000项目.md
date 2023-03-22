@@ -26,7 +26,17 @@ docker cp 容器名:容器中要拷贝的文件名及其路径 要拷贝到宿�
 # 从宿主机拷贝文件到容器
 docker cp 宿主机中要拷贝的文件名及其路径 容器名:要拷贝到容器里面对应的路径
 
+# 删除所有镜像
+docker rmi $(docker images -q)
 
+# 查看 docker 网络
+docker network ls
+
+# 删除 docker 网络
+docker network rm '网络名称'
+
+# 查看网络信息
+docker inspect adc5000
 ```
 
 
@@ -742,30 +752,31 @@ docker push njllljhfh/componet_server:redis_mq_minio
 
 
 
-## 一、部署过程
+## 2.1、部署方式一（用宿主机ip通信）
 
 开始部署前，在宿主机创建用户名为 mc5k 的用户，并用 mc5k 用户登录。如果不创建 mc5k 用户，那么请自行根据需求修改相关配置。
 
 
 
-### 1、从 dockerhub 拉取镜像
+### 2.1.1、从 dockerhub 拉取镜像
 
 ```shell
-docker pull njllljhfh/mysql:mysqldb5.7
-docker pull njllljhfh/nginx:my_nginx
-docker pull njllljhfh/componet_server:redis_mq_minio
+docker pull njllljhfh/mysql:mysqldb5.7 &&
+docker pull njllljhfh/nginx:my_nginx &&
+docker pull njllljhfh/componet_server:redis_mq_minio &&
 docker pull njllljhfh/adc_server:django_py3.8_uwsgi
 ```
 
 
 
-### 2、启动 mysql 容器
+### 2.1.2、启动 mysql 容器
 
 ```shell
 # 启动容器
-docker run -d -p 3306:3306 --name mysqldb -v /mydocker/mysql/logs:/var/log/mysql -v /mydocker/mysql/data:/var/lib/mysql njllljhfh/mysql:mysqldb5.7
+docker run --restart=always -d -p 3306:3306 --name mysqldb -v /mydocker/mysql/logs:/var/log/mysql -v /mydocker/mysql/data:/var/lib/mysql njllljhfh/mysql:mysqldb5.7
 
 # 初始化数据库
+用数据库可视化软件（如 Navicat）连接服务器数据库
 创建名称为 adc5000_v50006000 的数据库
 字符集选择 utf8
 排序规则 utf8_bin
@@ -775,16 +786,15 @@ docker run -d -p 3306:3306 --name mysqldb -v /mydocker/mysql/logs:/var/log/mysql
 
 # 运行初始化缺陷类的sql
 /home/mc5k/projects/adc5000/v50006000/MS_ADC/builds/V5000_6000/generate_lab_class/lab_class_generated.sql
-
 ```
 
 
 
-### 3、启动 redis_rabbitmq_minio 容器
+### 2.1.3、启动 redis_rabbitmq_minio 容器
 
 ```shell
 # 启动容器
-docker run -itd --name redis_mq_minio -p 9379:6379 -p 9900:9000 -p 60006:60006 -p 6672:5672 -p 45672:15672 -v /mydocker/minio/data:/data/minio -v /mydocker/minio/logs:/var/log/minio njllljhfh/componet_server:redis_mq_minio
+docker run --restart=always -itd --name redis_mq_minio -p 9379:6379 -p 9900:9000 -p 60006:60006 -p 6672:5672 -p 45672:15672 -v /mydocker/minio/data:/data/minio -v /mydocker/minio/logs:/var/log/minio njllljhfh/componet_server:redis_mq_minio
 
 # 进入 redis_mq_minio 容器
 docker exec -it redis_mq_minio /bin/bash
@@ -794,7 +804,7 @@ docker exec -it redis_mq_minio /bin/bash
 sudo rabbitmqctl add_user admin admin
 
 # 设置用户权限 
-sudo rabbitmqctl set_permissions -p / admin '.*' '.*' '.*'
+sudo rabbitmqctl set_permissions -p / admin '.*' '.*' '.*' &&
 sudo rabbitmqctl set_user_tags admin administrator
 
 # 添加VHOST 
@@ -809,25 +819,7 @@ exit
 
 
 
-### 4、启动 nginx 容器
-
-```shell
-# 启动容器
-docker run -d --name nginx_server -p 8080:80 -p 7156:8156 -p 7756:7756 -v /mydocker/nginx/logs:/var/log/nginx -v /home/mc5k/projects/adc5000/v50006000/html:/projects/adc5000/v50006000/html njllljhfh/nginx:my_nginx
-
-# 进入 nginx_server 容器
-docker exec -it nginx_server /bin/bash
-
-# 修改 adc 服务相的ip 为宿主机ip
-vim /etc/nginx/conf.d/adc_v50006000.conf 
-
-# 重新加载nginx
-nginx -s reload
-```
-
-
-
-### 5、启动 django_uwsgi 容器
+### 2.1.4、启动 django_uwsgi 容器
 
 ```shell
 # 创建项目目录
@@ -837,14 +829,15 @@ mkdir -p /home/mc5k/projects/adc5000/v50006000
 /home/mc5k/projects/adc5000/v50006000/html
 
 # 拉取项目
-cd /home/mc5k/projects/adc5000/v50006000/
-git clone git@192.168.10.30:dev/MS_ADC.git
-cd MS_ADC
-git checkout dev_1.1.9_6000
-chmod 777 auto_start_uwsgi_celery.sh start_celery.sh start_uwsgi.sh
-cp uwsgi.ini_docker uwsgi.ini
-cd /home/mc5k/projects/adc5000/v50006000/MS_ADC/config/settings
-cp production_docker.py production.py
+cd /home/mc5k/projects/adc5000/v50006000/ &&
+git clone git@192.168.10.30:dev/MS_ADC.git &&
+cd MS_ADC &&
+git checkout dev_1.1.9_6000 &&
+chmod 777 auto_start_uwsgi_celery.sh start_celery.sh start_uwsgi.sh &&
+cp uwsgi.ini_docker uwsgi.ini && 
+cd /home/mc5k/projects/adc5000/v50006000/MS_ADC/config/settings &&
+cp production_docker.py production.py &&
+cd -
 
 
 # 修改宿主机项目目录中 production.py 文件
@@ -856,12 +849,38 @@ BROKER_URL = f"amqp://admin:admin@{HOST_IP}:6672/adcvhost"
 
 
 # 启动容器
-docker run -itd --name django_uwsgi -p 7056:8000 -v /home/mc5k/projects/adc5000/v50006000/MS_ADC:/projects/MS_ADC -v /mydocker/uwsgi/logs:/var/log/uwsgi -v /mydocker/celery/logs:/var/log/celery njllljhfh/adc_server:django_py3.8_uwsgi
+docker run --restart=always -itd --name django_uwsgi -p 7056:8000 -v /home/mc5k/projects/adc5000/v50006000/MS_ADC:/projects/MS_ADC -v /mydocker/uwsgi/logs:/var/log/uwsgi -v /mydocker/celery/logs:/var/log/celery njllljhfh/adc_server:django_py3.8_uwsgi
 ```
 
 
 
-### 6、至此，服务已部署好
+### 2.1.5、启动 nginx 容器
+
+```shell
+# 启动容器
+docker run --restart=always -d --name nginx_server -p 8080:80 -p 7156:8156 -p 7756:7756 -v /mydocker/nginx/logs:/var/log/nginx -v /home/mc5k/projects/adc5000/v50006000/html:/projects/adc5000/v50006000/html njllljhfh/nginx:my_nginx
+
+# 进入 nginx_server 容器
+docker exec -it nginx_server /bin/bash
+
+# 修改 adc 服务（adc_uwsgi）的ip 为宿主机ip
+vim /etc/nginx/conf.d/adc_v50006000.conf
+# 修改如下
+upstream adc_uwsgi {
+    server '宿主机ip':7056;
+}
+
+
+# 重新加载nginx
+nginx -s reload
+
+# 退出容器
+exit
+```
+
+
+
+### 2.1.6、至此，服务已部署好
 
 ```shell
 # 用 谷歌浏览器 访问 adc服务器 ip:7156
@@ -874,22 +893,181 @@ docker run -itd --name django_uwsgi -p 7056:8000 -v /home/mc5k/projects/adc5000/
 
 
 
+---
 
 
-## 二、重启 uwsgi 服务用的脚本
+
+## 2.2、部署方式二（用 docker network 通信）
+
+开始部署前，在宿主机创建用户名为 mc5k 的用户，并用 mc5k 用户登录。如果不创建 mc5k 用户，那么请自行根据需求修改相关配置。
+
+
+
+### 2.2.1、从 dockerhub 拉取镜像
 
 ```shell
-# 如果修改了adc后端服务的配置，用以下命令重启uwsgi服务
-# 在宿主机，重启 django_uwsgi 容器中的 uwsgi服务。（/projects/MS_ADC/start_uwsgi.sh 是容器内的路径）
-docker exec django_uwsgi /projects/MS_ADC/start_uwsgi.sh
-
+docker pull njllljhfh/mysql:mysqldb5.7 &&
+docker pull njllljhfh/nginx:my_nginx &&
+docker pull njllljhfh/componet_server:redis_mq_minio &&
+docker pull njllljhfh/adc_server:django_py3.8_uwsgi
 ```
 
 
 
+### 2.2.2、创建 docker 网络
+
+#### 2.2.2.1、创建网络
+
+```shell
+# 创建名称为 adc5000 的 docker network
+docker network create adc5000
+```
+
+#### 2.2.2.2、启动网络管理容器（非必须）
+
+```shell
+# 启动 nicolaka/netshoot 网络管理容器（非必须）
+docker run -itd --network adc5000 --name net_adc5000 nicolaka/netshoot
+
+# 进入该容器后，可查看网络信息
+docker exec -it net_adc5000 /bin/bash
+
+# 例如，查看别名为 mysqldb 的网络信息
+dig mysqldb
+```
 
 
-## 三、常用命令
+
+### 2.2.3、启动 mysql 容器
+
+```shell
+# 启动容器
+docker run --restart=always -d --network adc5000 --network-alias mysqldb -p 3306:3306 --name mysqldb -v /mydocker/mysql/logs:/var/log/mysql -v /mydocker/mysql/data:/var/lib/mysql njllljhfh/mysql:mysqldb5.7
+
+# 初始化数据库
+用数据库可视化软件（如 Navicat）连接服务器数据库
+创建名称为 adc5000_v50006000 的数据库
+字符集选择 utf8
+排序规则 utf8_bin
+
+# 运行初始化表的sql
+/home/mc5k/projects/adc5000/v50006000/MS_ADC/builds/V5000_6000/V50006000_data_and_structure.sql
+
+# 运行初始化缺陷类的sql
+/home/mc5k/projects/adc5000/v50006000/MS_ADC/builds/V5000_6000/generate_lab_class/lab_class_generated.sql
+```
+
+
+
+### 2.2.4、启动 redis_rabbitmq_minio 容器
+
+```shell
+# 启动容器
+docker run --restart=always -itd --network adc5000 --network-alias redis_mq_minio --name redis_mq_minio -p 9379:6379 -p 9900:9000 -p 60006:60006 -p 6672:5672 -p 45672:15672 -v /mydocker/minio/data:/data/minio -v /mydocker/minio/logs:/var/log/minio njllljhfh/componet_server:redis_mq_minio
+
+# 进入 redis_mq_minio 容器
+docker exec -it redis_mq_minio /bin/bash
+
+# 进入容器后执行以下操作
+# 添加用户 
+sudo rabbitmqctl add_user admin admin
+
+# 设置用户权限 
+sudo rabbitmqctl set_permissions -p / admin '.*' '.*' '.*' &&
+sudo rabbitmqctl set_user_tags admin administrator
+
+# 添加VHOST 
+sudo rabbitmqctl add_vhost adcvhost
+
+# 添加VHOST权限 
+sudo rabbitmqctl set_permissions -p adcvhost admin ".*" ".*" ".*"
+
+# 退出容器
+exit
+```
+
+
+
+### 2.2.5、启动 django_uwsgi 容器
+
+```shell
+# 创建项目目录
+mkdir -p /home/mc5k/projects/adc5000/v50006000
+
+# 将前端静态文件拷贝到宿主机目录
+/home/mc5k/projects/adc5000/v50006000/html
+
+# 拉取项目
+cd /home/mc5k/projects/adc5000/v50006000/ &&
+git clone git@192.168.10.30:dev/MS_ADC.git &&
+cd MS_ADC &&
+git checkout dev_1.1.9_6000 &&
+chmod 777 auto_start_uwsgi_celery.sh start_celery.sh start_uwsgi.sh &&
+cp uwsgi.ini_docker uwsgi.ini &&
+cd /home/mc5k/projects/adc5000/v50006000/MS_ADC/config/settings &&
+cp production_docker_network.py production.py &&
+cd -
+
+
+# 修改宿主机项目目录中 production.py 文件
+vim /home/mc5k/projects/adc5000/v50006000/MS_ADC/config/settings/production.py
+# 修改ip
+HOST_IP="宿主机ip"
+
+
+# 启动容器
+docker run --restart=always -itd --network adc5000 --network-alias django_uwsgi --name django_uwsgi -p 7056:8000 -v /home/mc5k/projects/adc5000/v50006000/MS_ADC:/projects/MS_ADC -v /mydocker/uwsgi/logs:/var/log/uwsgi -v /mydocker/celery/logs:/var/log/celery njllljhfh/adc_server:django_py3.8_uwsgi
+```
+
+
+
+### 2.2.6、启动 nginx 容器
+
+```shell
+# 启动容器
+docker run --restart=always -d --network adc5000 --network-alias nginx_server --name nginx_server -p 8080:80 -p 7156:8156 -p 7756:7756 -v /mydocker/nginx/logs:/var/log/nginx -v /home/mc5k/projects/adc5000/v50006000/html:/projects/adc5000/v50006000/html njllljhfh/nginx:my_nginx
+
+# --------------------------------------------------------------
+
+# 以下步骤，如果 nginx 配置没有修改，可以不用执行
+
+# 进入 nginx_server 容器
+docker exec -it nginx_server /bin/bash
+
+# 修改 adc 服务（adc_uwsgi）的ip 为宿主机ip
+vim /etc/nginx/conf.d/adc_v50006000.conf
+# 修改如下
+upstream adc_uwsgi {
+    server django_uwsgi:8000;
+}
+
+# 重新加载nginx
+nginx -s reload
+
+# 退出容器
+exit
+```
+
+
+
+### 2.2.7、至此，服务已部署好
+
+```shell
+# 用 谷歌浏览器 访问 adc服务器 ip:7156
+例如访问 10.0.2.20:7156
+
+
+# 如有报错，解决问题
+# 然后重启 celery，重启 uwsgi
+```
+
+
+
+---
+
+
+
+## 常用命令
 
 ```shell
 # 进入 mysql 容器
