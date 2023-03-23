@@ -166,7 +166,7 @@ deb-src http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted unive
 sudo apt-get update
 
 
-#在 Ubuntu 18.中，python3 的默认版本为 3.6
+#在 Ubuntu18.04 中，python3 的默认版本为 3.6
 $ python3 -V
 Python 3.6.9
 
@@ -1067,6 +1067,84 @@ exit
 
 
 
+## 2.3、部署方式三（用docker compose 部署）
+
+### 2.3.1、docker compose 部署
+
+```shell
+# 创建项目目录
+mkdir -p /home/mc5k/projects/adc5000/v50006000
+
+# 将前端静态文件拷贝到宿主机目录
+/home/mc5k/projects/adc5000/v50006000/html
+
+# 拉取项目
+cd /home/mc5k/projects/adc5000/v50006000/ &&
+git clone git@192.168.10.30:dev/MS_ADC.git &&
+cd MS_ADC &&
+git checkout dev_1.1.9_6000 &&
+chmod 777 auto_start_uwsgi_celery.sh start_celery.sh start_uwsgi.sh &&
+cp uwsgi.ini_docker uwsgi.ini &&
+cd /home/mc5k/projects/adc5000/v50006000/MS_ADC/config/settings &&
+cp production_docker_network.py production.py &&
+cd -
+
+# 修改宿主机项目目录中 production.py 文件
+vim /home/mc5k/projects/adc5000/v50006000/MS_ADC/config/settings/production.py
+# 修改ip
+HOST_IP="宿主机ip"
+
+
+# 用 docker-compose.yml 启动全部容器
+cd /home/mc5k/projects/adc5000/v50006000/MS_ADC
+docker compose up -d
+
+
+# 初始化数据库
+用数据库可视化软件（如 Navicat）连接服务器数据库
+创建名称为 adc5000_v50006000 的数据库
+字符集选择 utf8
+排序规则 utf8_bin
+
+# 运行初始化表的sql
+/home/mc5k/projects/adc5000/v50006000/MS_ADC/builds/V5000_6000/V50006000_data_and_structure.sql
+
+# 运行初始化缺陷类的sql
+/home/mc5k/projects/adc5000/v50006000/MS_ADC/builds/V5000_6000/generate_lab_class/lab_class_generated.sql
+
+# ------------------------- 至此，服务已部署好 -------------------------
+# 用 谷歌浏览器 访问 adc服务器 ip:7156
+例如访问 10.0.2.20:7156
+
+
+# 如有报错，解决问题
+# 然后重启 celery，重启 uwsgi
+```
+
+
+
+### 2.3.2、docker compose 常用命令
+
+```shell
+# 用 docker compose 启动容器
+docker compose up -d
+
+# 用 docker compose 清理容器
+docker compose down
+
+# 查看 docker compose 启动日志
+docker compose logs -f
+
+# 查看 docker 网络
+docker network ls
+```
+
+
+
+---
+
+
+
 ## 常用命令
 
 ```shell
@@ -1118,4 +1196,8 @@ nginx -s reload
 }].
 
 ```
+
+
+
+
 
