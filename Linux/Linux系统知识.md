@@ -5,8 +5,9 @@
     ```bash
     vim /etc/sysconfig/network-scripts/ifcfg-你的网卡名字
     
+    # 修改已有配置
     BOOTPROTO=static
-    # 下面的值，根据自己的网络环境来设置
+    # 添加下面配置，下面的值，根据自己的网络环境来设置
     IPADDR=192.168.0.110
     NETMASK=255.255.255.0  # 如果是虚拟机，跟物理主机相同，否则会连不上互联网。
     GATEWAY=192.168.0.1  # 设为跟物理主机相同

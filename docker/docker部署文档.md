@@ -11,10 +11,10 @@ docker images
 # 查看所有运行或者不运行容器
 docker ps -a
 
-# 停止所有容器运行
+#停止所有容器运行
 docker stop $(docker ps -a -q)
 
-# 删除所有停止运行的容器
+#删除所有停止运行的容器
 docker rm $(docker ps -a -q)
 
 # 基于容器打包成镜像
@@ -28,15 +28,6 @@ docker cp 宿主机中要拷贝的文件名及其路径 容器名:要拷贝到�
 
 # 删除所有镜像
 docker rmi $(docker images -q)
-
-# 查看 docker 网络
-docker network ls
-
-# 删除 docker 网络
-docker network rm '网络名称'
-
-# 查看网络信息
-docker inspect adc5000
 ```
 
 
@@ -44,24 +35,6 @@ docker inspect adc5000
 ## 1.1、安装docker
 
 [官网](https://docs.docker.com/engine/install/ubuntu/#installation-methods)
-
-
-
-
-
-### docker命令每次需要sudo操作解决方案
-
-[网址](https://blog.csdn.net/qq_26400953/article/details/79908941)
-
-```
-操作步骤如下
-1.创建docker组：sudo groupadd docker
-2.将当前用户加入docker组：sudo gpasswd -a ${USER} docker
-3.重启服务：sudo service docker restart
-4.刷新docker成员：newgrp - docker
-```
-
-
 
 
 
@@ -80,8 +53,7 @@ sudo mkdir -p /mydocker/mysql/conf /mydocker/mysql/logs /mydocker/mysql/data
 docker run -d -p 4306:3306 --name mysqldb -e MYSQL_ROOT_PASSWORD=mysql mysql:5.7-debian
 # 配置好后，打包成mysql:mysqldb5.7镜像，然后用mysql:mysqldb5.7镜像启动容器
 docker run -d -p 4306:3306 --name mysqldb mysql:mysqldb5.7
-# 拷贝容器内的 mysql 配置目录到宿主机挂载目录
-# 如果不修改 mysql 容器内的配置文件，可以不用挂载配置文件，也就不需要拷贝配置文件到宿主机
+# 拷贝容器内的mysql配置目录到宿主机挂载目录
 sudo docker cp mysqldb:/etc/mysql/mysql.conf.d /mydocker/mysql/conf
 
 # 用新镜像启动mysql,将数据,日志,配置文件映射到本机
@@ -91,13 +63,6 @@ docker run -d -p 4306:3306 --name mysqldb -v /mydocker/mysql/logs:/var/log/mysql
 
 # 进入 mysql 容器
 docker exec -it mysqldb /bin/bash
-
-# mysql查询配置文件路径
-mysqld --verbose --help |grep -A 1 'Default options'
-# 输出结果：
-Default options are read from the following files in the given order:
-/etc/my.cnf /etc/mysql/my.cnf ~/.my.cnf
-
 ```
 
 在局域网内，远程访问mysql的端口是 4306。
@@ -107,7 +72,7 @@ Default options are read from the following files in the given order:
 ### 1.2.2、上传 dockerhub
 
 ```shell
-#1.在 dockerhub 上创建名为 mysql 的仓库（此步骤可以不用执行，直接 push 会自动创建不存在的仓库）
+#1.在 dockerhub 上创建名为 mysql 的仓库
 
 #2.在宿主机命令行登录 docker 账号
 docker login
@@ -124,8 +89,7 @@ docker push njllljhfh/mysql:mysqldb5.7
 ## 1.3、镜像-ubuntu1804_django_uwsgi
 
 ```shell
-# 拉取 ubuntu18.04-conda 镜像
-# docker pull gouthamshiv/ubuntu-conda
+# 拉取 ubuntu18.04 镜像
 docker pull ubuntu:18.04
 
 # 项目代码在宿主机的目录
@@ -150,7 +114,7 @@ docker exec -it django_uwsgi /bin/bash
 
 ```shell
 sudo vim /etc/apt/sources.list
-# 进入sources.list后，按i输入，在最后添加以下的国内源：
+#进入sources.list后，按i输入，在最后添加以下的国内源：
 deb http://mirrors.aliyun.com/ubuntu/ bionic main restricted universe multiverse
 deb http://mirrors.aliyun.com/ubuntu/ bionic-security main restricted universe multiverse
 deb http://mirrors.aliyun.com/ubuntu/ bionic-updates main restricted universe multiverse
@@ -163,25 +127,25 @@ deb-src http://mirrors.aliyun.com/ubuntu/ bionic-proposed main restricted univer
 deb-src http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted universe multiverse
 
 
-# 输入命令更新系统软件源地址:
+#输入命令更新系统软件源地址:
 sudo apt-get update
 
 
-# 在 Ubuntu18.04 中，python3 的默认版本为 3.6
+#在 Ubuntu18.04 中，python3 的默认版本为 3.6
 $ python3 -V
 Python 3.6.9
 
 
-# 安装依赖包
+#安装依赖包
 sudo apt update
 sudo apt install software-properties-common
 
 
-# 添加 deadsnakes PPA 源
+#添加 deadsnakes PPA 源
 sudo add-apt-repository ppa:deadsnakes/ppa
 
 
-# 安装 python 3.8
+#安装 python 3.8
 sudo apt install python3.8
 
 
@@ -227,10 +191,10 @@ pip install -r requirements.txt -i https://pypi.douban.com/simple/
 # 进入文件
 vim ~/.bashrc
 
-# 在最下面添加adc5000需要的环境变量，保存并退出
+#在最下面添加adc5000需要的环境变量，保存并退出
 export ADC_ENV=production
 
-# 更新添加的变量
+#更新添加的变量
 source ~/.bashrc
 ```
 
@@ -239,73 +203,19 @@ source ~/.bashrc
 ### 1.3.4、启动django项目，测试环境，解决问题
 
 ```shell
-# 启动django，解决报错
+# 启动django
 python manage.py runserver 0.0.0.0:8000
-```
-
-#### 解决cv2报错
-
-```shell
-# import cv2 报错：
-ImportError: libGL.so.1: cannot open shared object file: No such file or directory
-
-# 解决
-apt install libgl1-mesa-glx
 ```
 
 
 
 ### 1.3.5、安装uwsgi
 
-#### 安装uwsgi报错
+#### 安装uwsgi
 
 ```shell
-Exception: you need a C compiler to build uWSGI
-# 解决
-sudo apt-get install gcc
-
- 
-找不到头文件 #include <Python.h>
-# 解决
-sudo apt-get install libpython3.8-dev
-
 # 安装uwsgi
 pip install uwsgi
-```
-
-
-
-#### 用uwsgi启动django
-
-```shell
-uwsgi --ini uwsgi.ini
-```
-
-
-
-#### uwsgi启动后，用浏览器发起请求，报编码错误
-
-```shell
-# 报错
-UnicodeEncodeError: 'ascii' codec can't encode characters in position 85-86: ordinal not in range(128)
-
-# 查看当前本机编码
-locale
-# 可以发现值都是POSIX
-
-# 安装locales
-apt-get install locales
-
-# 安装en_US.UTF-8
-locale-gen en_US.UTF-8
-
-# 打开文件 /etc/profile
-vim ~/.bashrc
-# 将下面内容添加到最后
-export LC_ALL=en_US.UTF-8
-# 刷新
-source ~/.bashrc
-
 ```
 
 
@@ -349,6 +259,14 @@ log-date = %%Y-%%m-%%d %%H:%%M:%%S
 logformat = [UWSGI][%(ftime)][%(method)][%(status)][%(addr)][%(uri)]
 daemonize = /var/log/uwsgi/uwsgi.log
 
+```
+
+
+
+#### 用uwsgi启动django
+
+```shell
+uwsgi --ini uwsgi.ini
 ```
 
 
@@ -489,14 +407,13 @@ docker pull nginx
 sudo mkdir -p /mydocker/nginx/nginx /mydocker/nginx/logs
 
 
-# 启动 nginx 容器
+# 启动nginx容器
 docker run -d --name nginx_server -p 8080:80 -p 7156:8156 -v /mydocker/nginx/logs:/var/log/nginx nginx
-# 将 nginx 容器中的 /etc/nginx/conf.d 目录拷贝到宿主机 /mydocker/nginx/nginx/ 
-# 如果不修改 nginx 容器内的配置文件，可以不用挂载配置文件，也就不需要拷贝配置文件到宿主机
+# 将nginx容器中的 /etc/nginx/conf.d 目录拷贝到宿主机 /mydocker/nginx/nginx/
 sudo docker cp nginx_server:/etc/nginx/conf.d /mydocker/nginx/nginx/
 
 
-# 用新的镜像启动 nginx，在容器内部 8156 是前端代理服务的端口，7756 是后端代理服务的端口。
+# 用新的镜像启动nginx，在容器内部 8156是前端代理服务的端口，7756是后端代理服务的端口。
 docker run -d --name nginx_server -p 8080:80 -p 7156:8156 -p 7756:7756 -v /mydocker/nginx/logs:/var/log/nginx -v /mydocker/nginx/nginx/conf.d:/etc/nginx/conf.d -v /home/mc5k/projects/adc5000/v50006000/html:/projects/adc5000/v50006000/html nginx:my_nginx
 
 # 进入 nginx_server 容器
@@ -753,9 +670,10 @@ docker push njllljhfh/componet_server:redis_mq_minio
 
 进入 redis_mq_minio 容器内，在根目录创建 `init_rabbitmq.sh`脚本
 
+```shell
 vim /init_rabbitmq.sh
 
-```shell
+# 内容如下
 #!/bin/bash
 if rabbitmqctl list_users | grep '^admin'
 then
@@ -768,59 +686,13 @@ else
   sudo rabbitmqctl add_vhost adcvhost
   sudo rabbitmqctl set_permissions -p adcvhost admin ".*" ".*" ".*"
 fi
-```
 
-
-
-在根目录创建 `start_rabbitmq.sh` 脚本
-
-vim /start_rabbitmq.sh
-
-```shell
-#!/bin/bash
-
-max_attempts=3
-attempt=1
-
-while [ $attempt -le $max_attempts ]
-do
-    echo "Attempt $attempt to restart RabbitMQ..."
-    sudo service rabbitmq-server start
-
-    if [ $? -eq 0 ]
-    then
-        echo "RabbitMQ restarted successfully!"
-        break
-    else
-        echo "RabbitMQ failed to restart. Retrying in 3 seconds..."
-        sleep 3
-    fi
-
-    attempt=$((attempt + 1))
-
-    if [ $attempt = $max_attempts ]
-    then
-        echo "Failed to restart RabbitMQ after $max_attempts attempts."
-    fi
-done
-```
-
-
-
-修改  `~/.bashrc`
-
-```shell
 # 修改权限
-chmod 777 /start_rabbitmq.sh
 chmod 777 /init_rabbitmq.sh
 
 # 在 ~/.bashrc 文件最下面执行该脚本
 vim ~/.bashrc
-
 # 添加内容如下
-# start rabbitmq-server
-. start_rabbitmq.sh
-echo "----------------------------"
 # init admin user and adcvhost for rabbitmq
 . /init_rabbitmq.sh
 echo "----------------------------"
@@ -862,7 +734,7 @@ docker push njllljhfh/componet_server:redis_mq_minio_init
 
 ### 1.5.7、编写 docker-compose.yml
 
-在宿主机，项目根目录下，创建 `docker-compose.yml` 文件，内容如下
+在项目根目录下，创建 `docker-compose.yml` 文件，内容如下
 
 ```yaml
 version: "3.8"
@@ -1143,19 +1015,6 @@ docker pull njllljhfh/adc_server:django_py3.8_uwsgi
 ```shell
 # 创建名称为 adc5000 的 docker network
 docker network create adc5000
-```
-
-#### 2.2.2.2、启动网络管理容器（非必须）
-
-```shell
-# 启动 nicolaka/netshoot 网络管理容器（非必须）
-docker run -itd --network adc5000 --name net_adc5000 nicolaka/netshoot
-
-# 进入该容器后，可查看网络信息
-docker exec -it net_adc5000 /bin/bash
-
-# 例如，查看别名为 mysqldb 的网络信息
-dig mysqldb
 ```
 
 
