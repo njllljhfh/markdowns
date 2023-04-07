@@ -572,6 +572,72 @@ nginx -s reload
 
 
 
+上面的配置可简化为下面的配置
+
+```
+#upstream adc_uwsgi {
+#    server 10.0.2.20:7056;
+#}
+
+upstream adc_uwsgi {
+    server django_uwsgi:8000;
+}
+
+server {
+        listen 8156;
+
+        root /projects/adc5000/v50006000/html;
+
+        index index.html index.htm index.nginx-debian.html;
+
+        server_name v5000_6000;
+
+        location / {
+            try_files $uri $uri/ /index.html;
+        }
+
+        location /api {
+            uwsgi_send_timeout 600;
+            uwsgi_connect_timeout 600;
+            uwsgi_read_timeout 600;
+            include uwsgi_params;
+            uwsgi_pass adc_uwsgi;
+            proxy_read_timeout 3600;
+        }
+
+        client_max_body_size 1000m;
+        client_body_timeout 3600;
+}
+```
+
+
+
+备用参考配置
+
+```
+upstream adc_uwsgi {
+    server 127.0.0.1:8921;
+}
+
+server {
+    listen      8021;
+    server_name 0.0.0.0;
+
+    location ^~ /api {
+        include uwsgi_params;
+        uwsgi_pass adc_uwsgi;
+        rewrite "^/api/(.*)$" /$1 break;
+
+        add_header Access-Control-Allow-Origin *;
+        add_header Access-Control-Allow-Methods "POST, GET, DELETE, PUT, OPTIONS, PATCH, HEAD, TRACE";
+        add_header Access-Control-Allow-Credentials true;
+        add_header Access-Control-Allow-Headers *;
+     }
+}
+```
+
+
+
 ### 1.4.3、上传 dockerhub
 
 ```shell
@@ -1311,6 +1377,7 @@ git clone git@192.168.10.30:dev/MS_ADC.git &&
 cd MS_ADC &&
 git checkout dev_1.1.9_6000 &&
 chmod 777 auto_start_uwsgi_celery.sh start_celery.sh start_uwsgi.sh &&
+chmod 777 ./builds/V5000_6000/V50006000_mysql_init.sh &&
 cp uwsgi.ini_docker uwsgi.ini &&
 cd /home/mc5k/projects/adc5000/v50006000/MS_ADC/config/settings &&
 cp production_docker_network.py production.py &&
@@ -1329,17 +1396,22 @@ docker compose up -d
 
 
 # ---------------------------- 配置数据库 ----------------------------
-# 初始化数据库
+# ******** 方式 1：用脚本初始化数据库 ********
+cd /home/mc5k/projects/adc5000/v50006000/MS_ADC/builds/V5000_6000
+. V50006000_mysql_init.sh
+根据提示输入账号密码
+#
+# ******** 方式 2：手动初始化数据库 *********
 用数据库可视化软件（如 Navicat）连接服务器数据库
 创建名称为 adc5000_v50006000 的数据库
 字符集选择 utf8
 排序规则 utf8_bin
-
 # 运行初始化表的sql
 /home/mc5k/projects/adc5000/v50006000/MS_ADC/builds/V5000_6000/V50006000_data_and_structure.sql
-
 # 运行初始化缺陷类的sql
 /home/mc5k/projects/adc5000/v50006000/MS_ADC/builds/V5000_6000/generate_lab_class/lab_class_generated.sql
+
+
 
 
 # ------------------------- 至此，服务已部署好 -------------------------
