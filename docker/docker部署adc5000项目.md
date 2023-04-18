@@ -1367,6 +1367,7 @@ exit
 # -------------------------- 拷贝项目到宿主机 --------------------------
 # 创建项目目录
 mkdir -p /home/mc5k/projects/adc5000/v50006000
+mkdir -p /home/mc5k/projects/adc5000/v50006000/html
 
 # 将前端静态文件拷贝到宿主机目录
 /home/mc5k/projects/adc5000/v50006000/html
@@ -1380,7 +1381,7 @@ chmod 777 auto_start_uwsgi_celery.sh start_celery.sh start_uwsgi.sh &&
 chmod 777 ./builds/V5000_6000/V50006000_mysql_init.sh &&
 cp uwsgi.ini_docker uwsgi.ini &&
 cd /home/mc5k/projects/adc5000/v50006000/MS_ADC/config/settings &&
-cp production_docker_network.py production.py &&
+\cp -rf production_docker_network.py production.py &&
 cd -
 
 # 修改宿主机项目目录中 production.py 文件
@@ -1399,7 +1400,7 @@ docker compose up -d
 # ******** 方式 1：用脚本初始化数据库 ********
 cd /home/mc5k/projects/adc5000/v50006000/MS_ADC/builds/V5000_6000
 . V50006000_mysql_init.sh
-根据提示输入账号密码
+根据提示输入mysql账号和密码
 #
 # ******** 方式 2：手动初始化数据库 *********
 用数据库可视化软件（如 Navicat）连接服务器数据库
@@ -1479,6 +1480,9 @@ nginx -s reload
 ```shell
 # adc服务
 宿主机ip:7156
+
+# mysql
+宿主机ip:3306
 
 # minio服务
 宿主机ip:9900
