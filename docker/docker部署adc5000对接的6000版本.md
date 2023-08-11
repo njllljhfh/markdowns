@@ -434,7 +434,25 @@ echo "----------------------------"
 
 
 
-### 1.3.7、重启 celery 的脚本
+### 1.3.7、添加容器启动时执行的命令
+
+```shell
+# 进入容器
+docker exec django_uwsgi /projects/MS_ADC/start_uwsgi.sh
+
+# 编辑 ~/.bashrc
+vim ~/.bashrc
+在最下面添加以下内容
+# adc5000 env
+export ADC_ENV=production
+export LC_ALL=en_US.UTF-8
+# auto start celery, uwsgi
+source /projects/MS_ADC/auto_start_uwsgi_celery.sh
+```
+
+
+
+### 1.3.8、重启 celery 的脚本
 
 start_celery.sh
 
@@ -465,7 +483,48 @@ echo "----------------------------"
 
 
 
-### 1.3.8、上传 dockerhub
+### 1.3.9、初始化数据库的脚本
+
+```shell
+# 在宿主机
+cd /home/mc5k/projects/adc5000/v50006000/MS_ADC
+vim mysql_init.sh
+
+# 脚本内容如下
+#!/bin/bash
+SQL_DIRECTORY="builds/V5000_6000"
+DB_CREATE_FILE="$SQL_DIRECTORY/V50006000_create_db.sql"
+DB_INIT_FILE="$SQL_DIRECTORY/V50006000_data_and_structure.sql"
+CLASS_INIT_FILE="$SQL_DIRECTORY/generate_lab_class/lab_class_generated.sql"
+HOST="127.0.0.1"
+
+mysql_init() {
+  echo -n "Enter username: "
+  read userName
+
+  mysql -u${userName} -h ${HOST} -p <<EOF
+    source ${DB_CREATE_FILE};
+    source ${DB_INIT_FILE};
+    source ${CLASS_INIT_FILE};
+    exit
+EOF
+
+  res=$?
+
+  if [ "${res}" -ne "0" ]; then
+    echo -e "MysqlDB initialization failed. Exit(${res}).\n"
+  else
+    echo -e "MysqlDB initialization succeeded.\n"
+  fi
+}
+
+mysql_init
+
+```
+
+
+
+### 1.3.10、上传 dockerhub
 
 ```shell
 # 将本地镜像 nginx:my_nginx 打tag 
@@ -533,7 +592,7 @@ server {
                 include uwsgi_params;
                 uwsgi_pass adc_uwsgi;
             }
-        client_max_body_size 1000m;
+        client_max_body_size 10240m;
         client_body_timeout 3600;
 }
 
@@ -559,7 +618,7 @@ server {
             proxy_read_timeout 3600;
             proxy_pass http://adc50006000;
         }
-        client_max_body_size 1000m;
+        client_max_body_size 10240m;
 }
 
 
@@ -605,7 +664,7 @@ server {
             proxy_read_timeout 3600;
         }
 
-        client_max_body_size 1000m;
+        client_max_body_size 10240m;
         client_body_timeout 3600;
 }
 ```
@@ -695,6 +754,7 @@ redis-cli
 
 # 在 ~/.bashrc 文件末尾添加启动项
 内容如下：
+# start redis-server
 redis_pids=$(ps -aux | grep redis | awk '{print $2}' | grep -v "PID" |tr -s '\n' ' ')
 echo "redis_pids=$redis_pids"
 redis_arr=($redis_pids)
@@ -936,8 +996,9 @@ version: "3.8"
 services:
   mysqldb:
     image: njllljhfh/mysql:mysqldb5.7
+    environment:
+      - TZ=Asia/Shanghai
     container_name: mysqldb
-    tty: true
     depends_on:
       redis_mq_minio:
         condition: service_healthy
@@ -952,9 +1013,9 @@ services:
     healthcheck:
       test: [ "CMD-SHELL", "mysql -uroot -pmysql" ]
       interval: 3s
-      timeout: 3s
-      retries: 3
-      start_period: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   redis_mq_minio:
     image: njllljhfh/componet_server:redis_mq_minio_init
@@ -974,10 +1035,10 @@ services:
     restart: always
     healthcheck:
       test: [ "CMD-SHELL", "rabbitmqctl list_vhosts | grep '^adcvhost' || exit 1" ]
-      interval: 10s
+      interval: 3s
       timeout: 5s
       retries: 5
-      start_period: 10s
+      start_period: 15s
 
   django_uwsgi:
     image: njllljhfh/adc_server:django_py3.8_uwsgi
@@ -989,7 +1050,7 @@ services:
       mysqldb:
         condition: service_healthy
     volumes:
-      - /home/mc5k/projects/adc5000/v50006000/MS_ADC:/projects/MS_ADC
+      - .:/projects/MS_ADC
       - /mydocker/uwsgi/logs:/var/log/uwsgi
       - /mydocker/celery/logs:/var/log/celery
     ports:
@@ -999,18 +1060,19 @@ services:
     restart: always
     healthcheck:
       test: [ "CMD-SHELL", "lsof -i:8000 | awk '{print $2}' | grep -v 'PID' | tr -s '\n' ' ' || exit 1" ]
-      interval: 10s
+      interval: 3s
       timeout: 5s
       retries: 5
       start_period: 10s
 
   nginx_server:
     image: njllljhfh/nginx:my_nginx
+    environment:
+      - TZ=Asia/Shanghai
     container_name: nginx_server
-    tty: true
     volumes:
       - /mydocker/nginx/logs:/var/log/nginx
-      - /home/mc5k/projects/adc5000/v50006000/html:/projects/adc5000/v50006000/html
+      - ../html:/projects/adc5000/v50006000/html
     ports:
       - 8080:80
       - 7156:8156
@@ -1377,8 +1439,7 @@ cd /home/mc5k/projects/adc5000/v50006000/ &&
 git clone git@192.168.10.30:dev/MS_ADC.git &&
 cd MS_ADC &&
 git checkout dev_1.1.9_6000 &&
-chmod 777 auto_start_uwsgi_celery.sh start_celery.sh start_uwsgi.sh &&
-chmod 777 ./builds/V5000_6000/V50006000_mysql_init.sh &&
+chmod 777 auto_start_uwsgi_celery.sh start_celery.sh start_uwsgi.sh mysql_init.sh &&
 cp uwsgi.ini_docker uwsgi.ini &&
 cd /home/mc5k/projects/adc5000/v50006000/MS_ADC/config/settings &&
 \cp -rf production_docker_network.py production.py &&
@@ -1398,11 +1459,11 @@ docker compose up -d
 
 # ---------------------------- 配置数据库 ----------------------------
 # ******** 方式 1：用脚本初始化数据库 ********
-cd /home/mc5k/projects/adc5000/v50006000/MS_ADC/builds/V5000_6000
-. V50006000_mysql_init.sh
-根据提示输入mysql账号和密码
+cd /home/mc5k/projects/adc5000/v50006000/MS_ADC
+. mysql_init.sh
+根据提示输入mysql账号和密码（root, mysql）
 #
-# ******** 方式 2：手动初始化数据库 *********
+# ******** 方式 2：手动初始化数据库（备用方案） *********
 用数据库可视化软件（如 Navicat）连接服务器数据库
 创建名称为 adc5000_v50006000 的数据库
 字符集选择 utf8
@@ -1523,5 +1584,59 @@ nginx -s reload
 
 
 
+### redis
 
+```shell
+# 编写此文档时，redis最新版本7.0.11
+docker pull redis:7.0.11  
+
+
+# 解决redis配置文件配置了log文件路径后，权限问题
+sudo chmod 777 /mydocker/redis/logs
+
+
+# 下载redis配置文件
+cd /mydocker/redis/conf
+sudo wget http://download.redis.io/redis-stable/redis.conf
+sudo chmod 777 redis.conf
+
+
+# 启动容器
+docker run --name redisdb \
+-p 8379:6379 \
+-v /mydocker/redis/logs:/logs \
+-v /mydocker/redis/conf/redis.conf:/etc/redis/redis.conf \
+-v /mydocker/redis/data:/data \
+-d redis:latest redis-server /etc/redis/redis.conf
+
+
+# 进入redis
+docker exec -it redisdb /bin/bash
+```
+
+
+
+### minio
+
+```shell
+# adc用的版本
+docker pull minio/minio:RELEASE.2021-09-24T00-24-24Z.fips
+
+
+# 启动容器
+docker run -d --name minio \
+-p 9900:9000 \
+-p 60006:60006 \
+-e MINIO_ACCESS_KEY=minioadmin \
+-e MINIO_SECRET_KEY=minioadmin \
+-v /mydocker/minio/data:/data \
+-v /mydocker/minio/config:/root/.minio/  \
+-d minio/minio:RELEASE.2021-09-24T00-24-24Z.fips server --console-address ':60006' /data
+
+# 进入redis
+docker exec -it minio /bin/bash
+
+
+test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+```
 
