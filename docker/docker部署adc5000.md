@@ -1736,41 +1736,43 @@ docker system prune --volumes
 常用命令参考2.3.2节
 
 ```shell
-# 注意：下面操作的各个路径根据实际情况进行修改
 # -------------------------- 拷贝项目到宿主机 --------------------------
+# 根据服务器目录修改
+export ADC_HOME='/disks/ssd'
+
 # 创建项目目录
-mkdir -p /disks/ssd/projects/adc5000/v5000
-mkdir -p /disks/ssd/projects/adc5000/v5000/html
+mkdir -p $ADC_HOME/projects/adc5000/v5000
+mkdir -p $ADC_HOME/projects/adc5000/v5000/html
 
 # 将前端静态文件拷贝到宿主机目录
-/disks/ssd/projects/adc5000/v5000/html
+$ADC_HOME/projects/adc5000/v5000/html
 
 # 拉取项目
-cd /disks/ssd/projects/adc5000/v5000/ &&
+cd $ADC_HOME/projects/adc5000/v5000/ &&
 git clone git@192.168.10.30:dev/MS_ADC.git &&
 cd MS_ADC &&
 git checkout dev_1.1.9_quliang &&
 chmod 777 auto_start_uwsgi_celery.sh start_celery.sh start_uwsgi.sh mysql_init.sh start_rabbitmq.sh init_rabbitmq.sh &&
 cp uwsgi.ini_docker uwsgi.ini &&
-cd /disks/ssd/projects/adc5000/v5000/MS_ADC/config/settings &&
+cd $ADC_HOME/projects/adc5000/v5000/MS_ADC/config/settings &&
 \cp -rf production_docker_network.py production.py &&
 cd -
 
 # 修改宿主机项目目录中 production.py 文件
-vim /disks/ssd/projects/adc5000/v5000/MS_ADC/config/settings/production.py
+vim $ADC_HOME/projects/adc5000/v5000/MS_ADC/config/settings/production.py
 # 修改ip
 HOST_IP="宿主机ip"       # 如 192.168.11.234
 
 
 # ---------------------------- 启动项目 ----------------------------
 # 用 docker-compose.yml 启动全部容器
-cd /disks/ssd/projects/adc5000/v5000/MS_ADC
+cd $ADC_HOME/projects/adc5000/v5000/MS_ADC
 docker compose up -d
 
 
 # ---------------------------- 配置数据库 ----------------------------
 # ******** 方式 1：用脚本初始化数据库 ********
-cd /disks/ssd/projects/adc5000/v5000/MS_ADC
+cd $ADC_HOME/projects/adc5000/v5000/MS_ADC
 . mysql_init.sh
 根据提示输入mysql账号和密码（root, mysql）
 #
@@ -1780,9 +1782,9 @@ cd /disks/ssd/projects/adc5000/v5000/MS_ADC
 字符集选择 utf8
 排序规则 utf8_bin
 # 运行初始化表的sql
-/disks/ssd/projects/adc5000/v50006000/MS_ADC/builds/data_and_structure.sql
+$ADC_HOME/projects/adc5000/v50006000/MS_ADC/builds/data_and_structure.sql
 # 运行初始化缺陷类的sql
-/disks/ssd/projects/adc5000/v50006000/MS_ADC/builds/generate_lab_class/lab_class_generated.sql
+$ADC_HOME/projects/adc5000/v50006000/MS_ADC/builds/generate_lab_class/lab_class_generated.sql
 
 
 # ------------------------- 至此，服务已部署好 -------------------------
