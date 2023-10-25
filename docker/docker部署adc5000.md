@@ -1643,19 +1643,37 @@ test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
 
 
 
+---
 
 
 
 
-# 第三章 用dockerfile 生成 image
+
+# 第三章 用dockerfile部署adc5000
 
 ## 3.1、编写dockerfile
 
 参考第一章内容，在项目根目录下编写需要的dockerfile文件
 
-编写adc_server.dockerfile
 
-编写component.dockerfile
+
+编写 `adc_server.dockerfile`
+
+主要包括以下服务：
+
+- uwsgi
+- django
+- celery
+
+
+
+编写 `component.dockerfile`
+
+主要包括以下服务：
+
+- redis
+- rabbitmq
+- minio
 
 
 
@@ -1688,7 +1706,6 @@ grant all privileges on *.* to 'adc5000'@'%';
 service mysql stop
 service mysql start
 service mysql status
-
 
 
 
@@ -1733,11 +1750,13 @@ docker system prune --volumes
 
 ## 3.3、docker compose 部署
 
-常用命令参考2.3.2节
+### 3.3.1、新服务器部署项目
 
 ```shell
 # -------------------------- 拷贝项目到宿主机 --------------------------
 # 根据服务器目录修改
+# export ADC_HOME='/home/mc5k'
+# export ADC_HOME='/home/mt'
 export ADC_HOME='/disks/ssd'
 
 # 创建项目目录
@@ -1798,6 +1817,73 @@ $ADC_HOME/projects/adc5000/v50006000/MS_ADC/builds/generate_lab_class/lab_class_
 
 
 
+### 3.3.2、处理服务器的ip地址变更
+
+```shell
+当服务器的ip变更后（如服务器从公司移动到客户现场时），需要修改配置文件中的ip地址，并重启相关服务
+
+# 项目目录（根据实际情况设置项目所在目录）
+export ADC_HOME='/disks/ssd'
+
+# 修改宿主机项目目录中 production.py 文件
+vim $ADC_HOME/projects/adc5000/v5000/MS_ADC/config/settings/production.py
+# 修改ip
+HOST_IP="宿主机ip"       # 如 192.168.11.234
+
+# 在宿主机，重启 django_uwsgi 容器中的 uwsgi服务
+docker exec django_uwsgi /projects/MS_ADC/start_uwsgi.sh
+
+# 在宿主机，重启 django_uwsgi 容器中的 celery
+docker exec django_uwsgi /projects/MS_ADC/start_celery.sh
+```
+
+
+
+### 3.3.3、docker compose 常用命令
+
+```shell
+# 用 docker compose 启动容器
+docker compose up -d
+
+# 用 docker compose 清理容器
+docker compose down
+
+# 查看 docker compose 启动日志
+docker compose logs -f
+
+# 查看 docker 网络
+docker network ls
+```
+
+
+
+### 3.3.4、常用命令
+
+```shell
+# 进入 mysql 容器
+docker exec -it mysqldb /bin/bash
+
+# 进入 redis_mq_minio 容器
+docker exec -it redis_mq_minio /bin/bash
+
+# 进入 nginx_server 容器
+docker exec -it nginx_server /bin/bash
+
+# 进入 django_uwsgi 容器
+docker exec -it django_uwsgi /bin/bash
+
+# 在宿主机，重启 django_uwsgi 容器中的 uwsgi服务（/projects/MS_ADC/start_uwsgi.sh 是容器内的路径）
+docker exec django_uwsgi /projects/MS_ADC/start_uwsgi.sh
+
+# 在宿主机，重启 django_uwsgi 容器中的 celery（/projects/MS_ADC/start_celery.sh 是容器内的路径）
+docker exec django_uwsgi /projects/MS_ADC/start_celery.sh
+
+# 进入nginx容器，重新加载nginx
+nginx -s reload
+```
+
+
+
 ## 服务端口
 
 ```shell
@@ -1818,4 +1904,99 @@ $ADC_HOME/projects/adc5000/v50006000/MS_ADC/builds/generate_lab_class/lab_class_
 ```
 
 
+
+---
+
+
+
+
+
+# 第四章、分布式部署
+
+## 部署
+
+```shell
+# 根据服务器目录修改
+# export ADC_HOME='/home/mc5k'
+# export ADC_HOME='/home/mt'
+export ADC_HOME='/disks/ssd'
+
+# 创建项目目录
+mkdir -p $ADC_HOME/projects/adc5000/v5000
+mkdir -p $ADC_HOME/projects/adc5000/v5000/html
+
+# 将前端静态文件拷贝到宿主机目录
+$ADC_HOME/projects/adc5000/v5000/html
+
+# 拉取项目
+cd $ADC_HOME/projects/adc5000/v5000/ &&
+git clone git@192.168.10.30:dev/MS_ADC.git &&
+cd MS_ADC &&
+git checkout dev_1.1.9_quliang &&
+chmod 777 auto_start_uwsgi_celery.sh start_celery.sh start_uwsgi.sh mysql_init.sh start_rabbitmq.sh init_rabbitmq.sh &&
+cp uwsgi.ini_docker uwsgi.ini &&
+cd $ADC_HOME/projects/adc5000/v5000/MS_ADC/config/settings &&
+\cp -rf production_docker_distributed.py production.py &&
+cd -
+
+# 修改宿主机项目目录中 production.py 文件
+vim $ADC_HOME/projects/adc5000/v5000/MS_ADC/config/settings/production.py
+# 修改ip
+HOST_IP="宿主机ip"       # 如 192.168.11.234
+
+
+# 方法1：
+# 修改以下3个文件中 celery 用的任务和队列名称，用后缀0,1,2进行区分
+# 修改 start_celery.sh
+vim $ADC_HOME/projects/adc5000/v5000/MS_ADC/start_celery.sh
+# 修改 auto_start_uwsgi_celery.sh
+vim $ADC_HOME/projects/adc5000/v5000/MS_ADC/auto_start_uwsgi_celery.sh
+# 修改 common.py
+vim $ADC_HOME/projects/adc5000/v5000/MS_ADC/config/common.py
+# -------------------------------
+# 方法2：
+# 修改 production.py 文件中 BROKER_URL 中的vhost
+vim $ADC_HOME/projects/adc5000/v5000/MS_ADC/config/settings/production.py
+
+
+# 启动组件(只在一台机器上启动)
+docker compose -f docker-compose-mysql-component.yml up -d
+
+
+# ---------------------------- 配置数据库 ----------------------------
+# ******** 方式 1：用脚本初始化数据库 ********
+cd $ADC_HOME/projects/adc5000/v5000/MS_ADC
+. mysql_init.sh
+根据提示输入mysql账号和密码（root, mysql）
+
+
+# 启动adc服务
+docker compose -f docker-compose-server.yml up -d
+
+
+```
+
+
+
+
+
+## 命令
+
+```shell
+# 启动组件
+docker compose -f docker-compose-mysql-component.yml up -d
+# 停止组件
+docker compose -f docker-compose-mysql-component.yml down
+
+
+
+# 启动adc服务
+docker compose -f docker-compose-server.yml up -d
+# 停止adc服务
+docker compose -f docker-compose-server.yml down
+
+
+
+dos2unix init_rabbitmq.sh
+```
 
