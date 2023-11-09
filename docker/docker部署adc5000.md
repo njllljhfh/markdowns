@@ -1905,6 +1905,15 @@ nginx -s reload
 
 
 
+## 挂载自动任务目录
+
+```bash
+#!bin/bash
+sudo mount -t cifs -o username=PC,password=123,uid=$(id -u),gid=$(id -g),forceuid,forcegid "//10.0.0.128/AdcData" "/home/mc5k/sharedir/10.0.0.128/adc5000/AdcData"
+```
+
+
+
 ---
 
 
@@ -1998,5 +2007,12 @@ docker compose -f docker-compose-server.yml down
 
 
 dos2unix init_rabbitmq.sh
+
+
+
+# 测试读取速度
+sudo hdparm -Tt /dev/sdc1
+# 测试写入速度
+sudo dd if=/dev/sdc1 of=testfile bs=1M count=100
 ```
 

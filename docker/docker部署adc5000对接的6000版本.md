@@ -1557,6 +1557,13 @@ nginx -s reload
 
 
 
+## 挂载自动任务目录
+
+```bash
+#!bin/bash
+sudo mount -t cifs -o username=PC,password=123,uid=$(id -u),gid=$(id -g),forceuid,forcegid "//10.0.0.128/AdcData" "/home/mc5k/sharedir/10.0.0.128/adc5000/AdcData"
+```
+
 
 
 ## 备用
