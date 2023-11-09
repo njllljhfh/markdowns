@@ -1542,15 +1542,19 @@ nginx -s reload
 ```shell
 # adc服务
 宿主机ip:7156
+账号密码：admin, 123
 
 # mysql
 宿主机ip:3306
+账号密码：root, mysql
 
 # minio服务
 宿主机ip:9900
+账号密码：minioadmin, minioadmin
 
 # rabbitmq
 宿主机ip:45672
+账号密码：admin, admin
 
 # redis
 宿主机ip:9379
@@ -1889,15 +1893,19 @@ nginx -s reload
 ```shell
 # adc服务
 宿主机ip:7156
+账号密码：admin, 123
 
 # mysql
 宿主机ip:3306
+账号密码：root, mysql
 
 # minio服务
 宿主机ip:9000
+账号密码：minio, admin
 
 # rabbitmq
 宿主机ip:15672
+账号密码：admin, admin
 
 # redis
 宿主机ip:6379
